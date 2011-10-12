@@ -312,6 +312,19 @@ unsigned L1Encoder::ARFCN() const
 
 
 
+unsigned L1Decoder::ARFCN() const
+{
+	assert(mParent);
+	return mParent->ARFCN();
+}
+
+
+TypeAndOffset L1Decoder::typeAndOffset() const
+{
+	return mMapping.typeAndOffset();
+}
+
+
 void L1Decoder::open()
 {
 	ScopedLock lock(mLock);
