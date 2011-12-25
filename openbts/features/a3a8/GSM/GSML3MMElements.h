@@ -1,8 +1,8 @@
 /**@file @brief Elements for Mobility Management messages, GSM 04.08 9.2. */
-
 /*
-* Copyright 2008-2010 Free Software Foundation, Inc.
+* Copyright 2008, 2009 Free Software Foundation, Inc.
 * Copyright 2010 Kestrel Signal Processing, Inc.
+* Copyright 2011 Range Networks, Inc.
 *
 * This software is distributed under the terms of the GNU Affero Public License.
 * See the COPYING file in the main directory for details.
@@ -68,6 +68,9 @@ class L3CMServiceType : public L3ProtocolElement {
 
 	bool operator==(const L3CMServiceType& other) const
 		{ return mType == other.mType; }
+
+	bool operator!=(const L3CMServiceType& other) const
+		{ return mType != other.mType; }
 	
 	size_t lengthV() const { return 0; }	
 	void writeV(L3Frame&, size_t&) const { assert(0); }
