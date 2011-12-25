@@ -1,5 +1,5 @@
 /*
-* Copyright 2008, 2009, 2010m 2011 Free Software Foundation, Inc.
+* Copyright 2008, 2009, 2010, 2011 Free Software Foundation, Inc.
 * Copyright 2011 Range Networks, Inc.
 *
 * This software is distributed under the terms of the GNU Affero Public License.
@@ -22,7 +22,6 @@
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 */
-
 
 
 
@@ -154,13 +153,19 @@ void SIPInterface::write(const struct sockaddr_in* dest, osip_message_t *msg)
 	size_t msgSize;
 	osip_message_to_str(msg, &str, &msgSize);
 	if (!str) {
-		LOG(ERR) << "osip_message_to_str produced a NULL pointer.";
+		LOG(ALERT) << "osip_message_to_str produced a NULL pointer.";
 		return;
 	}
 	char firstLine[100];
 	sscanf(str,"%100[^\n]",firstLine);
 	LOG(INFO) << "write " << firstLine;
 	LOG(DEBUG) << "write " << str;
+
+	if (random()%100 < gConfig.getNum("Test.SIP.SimulatedPacketLoss",0)) {
+		LOG(NOTICE) << "simulating dropped outbound SIP packet: " << firstLine;
+		free(str);
+		return;
+	}
 
 	mSocketLock.lock();
 	mSIPSocket.send((const struct sockaddr*)dest,str);
@@ -181,8 +186,15 @@ void SIPInterface::drive()
 		LOG(ALERT) << "cannot read SIP socket.";
 		return;
 	}
-	// FIXME -- Is this +1 offset correct?  Check it.
+	if (numRead<10) {
+		LOG(WARNING) << "malformed packet (" << numRead << " bytes) on SIP socket";
+		return;
+	}
 	mReadBuffer[numRead] = '\0';
+	if (random()%100 < gConfig.getNum("Test.SIP.SimulatedPacketLoss",0)) {
+		LOG(NOTICE) << "simulating dropped inbound SIP packet: " << mReadBuffer;
+		return;
+	}
 
 	// Get the proxy from the inbound message.
 #if 0
@@ -210,11 +222,25 @@ void SIPInterface::drive()
 		// Parse the mesage.
 		osip_message_t * msg;
 		int i = osip_message_init(&msg);
-		LOG(INFO) << "osip_message_init " << i;
+		LOG(DEBUG) << "osip_message_init " << i;
 		int j = osip_message_parse(msg, mReadBuffer, strlen(mReadBuffer));
 		// seems like it ought to do something more than display an error,
 		// but it used to not even do that.
-		LOG(INFO) << "osip_message_parse " << j;
+		LOG(DEBUG) << "osip_message_parse " << j;
+		// heroic efforts to get it to parse the www-authenticate header failed,
+		// so we'll just crowbar that sucker in.
+		char *p = strcasestr(mReadBuffer, "nonce");
+		if (p) {
+			string RAND = string(mReadBuffer, p-mReadBuffer+6, 32);
+			LOG(INFO) << "crowbar www-authenticate " << RAND;
+			osip_www_authenticate_t *auth;
+			osip_www_authenticate_init(&auth);
+			string auth_type = "Digest";
+			osip_www_authenticate_set_auth_type(auth, osip_strdup(auth_type.c_str()));
+			osip_www_authenticate_set_nonce(auth, osip_strdup(RAND.c_str()));
+			int k = osip_list_add (&msg->www_authenticates, auth, -1);
+			if (k < 0) LOG(ERR) << "problem adding www_authenticate";
+		}
 
 		if (msg->sip_method) LOG(DEBUG) << "read method " << msg->sip_method;
 
@@ -368,8 +394,8 @@ bool SIPInterface::checkInvite( osip_message_t * msg)
 			mSIPMap.remove(callIDNum);
 			return false;
 		}
-		// There is transaction already.  Send trying.
-		transaction->MTCSendTrying();
+		// There is transaction already.  Send trying, if appropriate.
+		if (serviceType!=L3CMServiceType::MobileTerminatedShortMessage) transaction->MTCSendTrying();
 		// And if no channel is established yet, page again.
 		if (!chan) {
 			LOG(INFO) << "repeated SIP INVITE/MESSAGE, repaging for transaction " << *transaction; 
@@ -417,7 +443,7 @@ bool SIPInterface::checkInvite( osip_message_t * msg)
 	transaction->SIPUser(callIDNum,IMSI,callerID,callerHost);
 	transaction->saveINVITE(msg,false);
 	// Tell the sender we are trying.
-	transaction->MTCSendTrying();
+	if (serviceType!=L3CMServiceType::MobileTerminatedShortMessage) transaction->MTCSendTrying();
 
 	// SMS?  Get the text message body to deliver.
 	if (serviceType == L3CMServiceType::MobileTerminatedShortMessage) {
