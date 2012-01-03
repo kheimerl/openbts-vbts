@@ -300,8 +300,8 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
   float avgPwr = 0.0;
 
   //kurtis shit
-  if (energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold + 2.0,&av
-    LOG(INFO) << "Kurtis Big Packet Arrived @ " << mEnergyThreshold << " and " 
+  if (energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold + 2.0,&avgPwr)) {
+    LOG(INFO) << "Kurtis Big Packet Arrived @ " << mEnergyThreshold << " and " << sqrt(avgPwr);
   }
 
   if (!energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold,&avgPwr)) {
@@ -371,7 +371,6 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
       mEnergyThreshold += 10.0F/10.0F*exp(-framesElapsed);
       prevFalseDetectionTime = rxBurst->getTime();
       channelResponse[timeslot] = NULL;
-      //LOG(INFO) << "Kurtis: Received RACH Burst. Probably a call/sms";
     }
   }
   else {
@@ -386,6 +385,7 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
       mEnergyThreshold -= (1.0F/10.0F);
       if (mEnergyThreshold < 0.0) mEnergyThreshold = 0.0;
       channelResponse[timeslot] = NULL; 
+      //LOG(INFO) << "Kurtis: Received RACH Burst. Probably a call/sms";
     }
     else {
       double framesElapsed = rxBurst->getTime()-prevFalseDetectionTime;
