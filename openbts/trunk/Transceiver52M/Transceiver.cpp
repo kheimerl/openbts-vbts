@@ -324,11 +324,16 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
 
   //kurtis shit
   if (energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold + OVERTHRESH,&avgPwr)) {
+<<<<<<< HEAD
     LOG(ALERT) << "Updating:" << sqrt(avgPwr) - mEnergyThreshold;
     time(&gLastPing);
     if (!TX_end_print){
       TX_end_print = true;
     }
+=======
+    //LOG(ALERT) << "Updating " << mEnergyThreshold + OVERTHRESH << " " << avgPwr;
+    time(&gLastPing);
+>>>>>>> Fake PA controller. Couldn't test at home, too much noise.
   }
 
   if (!energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold,&avgPwr)) {
@@ -389,8 +394,6 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
          channelEstimateTime[timeslot] = rxBurst->getTime();  
          LOG(DEBUG) << "SNR: " << SNRestimate[timeslot] << ", DFE forward: " << *DFEForward[timeslot] << ", DFE backward: " << *DFEFeedback[timeslot];
       }
-      //talking to self, not burst
-      //LOG(INFO) << "Kurtis: Received Other Burst. Camping?";
     }
     else {
       double framesElapsed = rxBurst->getTime()-prevFalseDetectionTime; 
@@ -412,7 +415,6 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
       mEnergyThreshold -= (1.0F/10.0F);
       if (mEnergyThreshold < 0.0) mEnergyThreshold = 0.0;
       channelResponse[timeslot] = NULL; 
-      //LOG(INFO) << "Kurtis: Received RACH Burst. Probably a call/sms";
     }
     else {
       double framesElapsed = rxBurst->getTime()-prevFalseDetectionTime;
@@ -448,9 +450,6 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
   //if (burst) LOG(DEBUG) << "burst: " << *burst << '\n';
 
   delete rxBurst;
-
-  //talking to self, not camping
-  //LOG(INFO) << "Kurtis: Burst?";
 
   return burst;
 }
@@ -775,9 +774,20 @@ void Transceiver::driveTransmitFIFO()
         }
       }
       // time to push burst to transmit FIFO
+<<<<<<< HEAD
       //kurtis commented this once
       pushRadioVector(mTransmitDeadlineClock);
       mTransmitDeadlineClock.incTN();	
+=======
+      //kurtis
+      //TX for TX_TIME 
+      time_t curtime = time(NULL);
+      if (gLastPing && difftime(curtime, gLastPing) < TX_TIME){
+	//LOG(ALERT) << "Transmitting " << difftime(curtime, gLastPing);
+	pushRadioVector(mTransmitDeadlineClock);
+      }
+      mTransmitDeadlineClock.incTN();
+>>>>>>> Fake PA controller. Couldn't test at home, too much noise.
     }
     
   }
