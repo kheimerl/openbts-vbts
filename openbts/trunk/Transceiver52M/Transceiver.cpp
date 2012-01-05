@@ -33,12 +33,11 @@
 #include "Transceiver.h"
 #include <Logger.h>
 
+#define OVERTHRESH 5.0
 
-#ifdef USE_UHD
-#define OVERTHRESH 3000.0
-#else
-#define OVERTHRESH 20.0
-#endif
+#define TX_TIME 5 * 60
+
+time_t gLastPing;
 
 Transceiver::Transceiver(int wBasePort,
 			 const char *TRXAddress,
@@ -306,8 +305,9 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
   float avgPwr = 0.0;
 
   //kurtis shit
-  if (energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold + 2.0,&avgPwr)) {
-    LOG(INFO) << "Kurtis Big Packet Arrived @ " << mEnergyThreshold << " and " << sqrt(avgPwr);
+  if (energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold + OVERTHRESH,&avgPwr)) {
+    //LOG(ALERT) << "Updating " << mEnergyThreshold + OVERTHRESH << " " << avgPwr;
+    time(&gLastPing);
   }
 
   if (!energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold,&avgPwr)) {
@@ -368,8 +368,6 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
          channelEstimateTime[timeslot] = rxBurst->getTime();  
          LOG(DEBUG) << "SNR: " << SNRestimate[timeslot] << ", DFE forward: " << *DFEForward[timeslot] << ", DFE backward: " << *DFEFeedback[timeslot];
       }
-      //talking to self, not burst
-      //LOG(INFO) << "Kurtis: Received Other Burst. Camping?";
     }
     else {
       double framesElapsed = rxBurst->getTime()-prevFalseDetectionTime; 
@@ -391,7 +389,6 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
       mEnergyThreshold -= (1.0F/10.0F);
       if (mEnergyThreshold < 0.0) mEnergyThreshold = 0.0;
       channelResponse[timeslot] = NULL; 
-      //LOG(INFO) << "Kurtis: Received RACH Burst. Probably a call/sms";
     }
     else {
       double framesElapsed = rxBurst->getTime()-prevFalseDetectionTime;
@@ -427,9 +424,6 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
   //if (burst) LOG(DEBUG) << "burst: " << *burst << '\n';
 
   delete rxBurst;
-
-  //talking to self, not camping
-  //LOG(INFO) << "Kurtis: Burst?";
 
   return burst;
 }
@@ -754,8 +748,13 @@ void Transceiver::driveTransmitFIFO()
         }
       }
       // time to push burst to transmit FIFO
-      //kurtis commented this once
-      pushRadioVector(mTransmitDeadlineClock);
+      //kurtis
+      //TX for TX_TIME 
+      time_t curtime = time(NULL);
+      if (gLastPing && difftime(curtime, gLastPing) < TX_TIME){
+	//LOG(ALERT) << "Transmitting " << difftime(curtime, gLastPing);
+	pushRadioVector(mTransmitDeadlineClock);
+      }
       mTransmitDeadlineClock.incTN();
     }
     
