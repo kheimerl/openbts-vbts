@@ -33,11 +33,13 @@
 #include "Transceiver.h"
 #include <Logger.h>
 
-#define OVERTHRESH 5.0
+#define OVERTHRESH 5000.0
 
 #define TX_TIME 5 * 60
 
 time_t gLastPing;
+
+bool TX_end_print = false;
 
 Transceiver::Transceiver(int wBasePort,
 			 const char *TRXAddress,
@@ -306,8 +308,11 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
 
   //kurtis shit
   if (energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold + OVERTHRESH,&avgPwr)) {
-    //LOG(ALERT) << "Updating " << mEnergyThreshold + OVERTHRESH << " " << avgPwr;
+    LOG(ALERT) << "Updating:" << sqrt(avgPwr) - mEnergyThreshold;
     time(&gLastPing);
+    if (!TX_end_print){
+      TX_end_print = true;
+    }
   }
 
   if (!energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold,&avgPwr)) {
@@ -752,8 +757,11 @@ void Transceiver::driveTransmitFIFO()
       //TX for TX_TIME 
       time_t curtime = time(NULL);
       if (gLastPing && difftime(curtime, gLastPing) < TX_TIME){
-	//LOG(ALERT) << "Transmitting " << difftime(curtime, gLastPing);
 	pushRadioVector(mTransmitDeadlineClock);
+      }
+      else if (TX_end_print){
+	TX_end_print = false;
+	LOG(ALERT) << "Done Transmitting";
       }
       mTransmitDeadlineClock.incTN();
     }
