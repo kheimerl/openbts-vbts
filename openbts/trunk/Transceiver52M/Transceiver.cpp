@@ -33,6 +33,7 @@
 #include "Transceiver.h"
 #include <Logger.h>
 
+<<<<<<< HEAD
 //max noise seen USP:1.64514
 
 #ifdef USE_UHD
@@ -40,10 +41,15 @@
 #else
 #define OVERTHRESH 20.0
 #endif
+=======
+#define OVERTHRESH 5000.0
+>>>>>>> ok testing and working
 
 #define TX_TIME 5 * 60
 
 time_t gLastPing = NULL;
+
+bool TX_end_print = false;
 
 bool TX_end_print = false;
 
@@ -323,16 +329,11 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
 
   //kurtis shit
   if (energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold + OVERTHRESH,&avgPwr)) {
-<<<<<<< HEAD
     LOG(ALERT) << "Updating:" << sqrt(avgPwr) - mEnergyThreshold;
     time(&gLastPing);
     if (!TX_end_print){
       TX_end_print = true;
     }
-=======
-    //LOG(ALERT) << "Updating " << mEnergyThreshold + OVERTHRESH << " " << avgPwr;
-    time(&gLastPing);
->>>>>>> Fake PA controller. Couldn't test at home, too much noise.
   }
 
   if (!energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold,&avgPwr)) {
@@ -782,8 +783,11 @@ void Transceiver::driveTransmitFIFO()
       //TX for TX_TIME 
       time_t curtime = time(NULL);
       if (gLastPing && difftime(curtime, gLastPing) < TX_TIME){
-	//LOG(ALERT) << "Transmitting " << difftime(curtime, gLastPing);
 	pushRadioVector(mTransmitDeadlineClock);
+      }
+      else if (TX_end_print){
+	TX_end_print = false;
+	LOG(ALERT) << "Done Transmitting";
       }
       mTransmitDeadlineClock.incTN();
 >>>>>>> Fake PA controller. Couldn't test at home, too much noise.
