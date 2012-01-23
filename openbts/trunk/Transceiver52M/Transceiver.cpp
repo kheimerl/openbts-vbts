@@ -117,18 +117,28 @@ Transceiver::~Transceiver()
 }
   
 
+//kurtis?
 void Transceiver::addRadioVector(BitVector &burst,
 				 int RSSI,
 				 GSM::Time &wTime)
 {
   // modulate and stick into queue 
-  signalVector* modBurst = modulateBurst(burst,*gsmPulse,
-					 8 + (wTime.TN() % 4 == 0),
-					 mSamplesPerSymbol);
-  scaleVector(*modBurst,txFullScale * pow(10,-RSSI/10));
-  radioVector *newVec = new radioVector(*modBurst,wTime);
-  mTransmitPriorityQueue.write(newVec);
-  delete modBurst;
+  //kurtis
+  //TX for TX_TIME 
+  time_t curtime = time(NULL);
+  if (gLastPing && difftime(curtime, gLastPing) < TX_TIME){  
+    signalVector* modBurst = modulateBurst(burst,*gsmPulse,
+					   8 + (wTime.TN() % 4 == 0),
+					   mSamplesPerSymbol);
+    scaleVector(*modBurst,txFullScale * pow(10,-RSSI/10));
+    radioVector *newVec = new radioVector(*modBurst,wTime);
+    mTransmitPriorityQueue.write(newVec);
+    delete modBurst;
+  }
+  else if (TX_end_print){
+    TX_end_print = false;
+    LOG(ALERT) << "Done Transmitting";
+  }
 }
 
 #ifdef TRANSMIT_LOGGING
@@ -187,21 +197,13 @@ void Transceiver::pushRadioVector(GSM::Time &nowTime)
     return;
   }
 
-  //kurtis
-  //TX for TX_TIME 
-  time_t curtime = time(NULL);
-  if (gLastPing && difftime(curtime, gLastPing) < TX_TIME){
-    // otherwise, pull filler data, and push to radio FIFO
-    mRadioInterface->driveTransmitRadio(*(fillerTable[modFN][TN]),(mChanType[TN]==NONE));
+  // otherwise, pull filler data, and push to radio FIFO
+  mRadioInterface->driveTransmitRadio(*(fillerTable[modFN][TN]),(mChanType[TN]==NONE));
 #ifdef TRANSMIT_LOGGING
-    if (nowTime.TN()==TRANSMIT_LOGGING) 
-      unModulateVector(*fillerTable[modFN][TN]);
+  if (nowTime.TN()==TRANSMIT_LOGGING) 
+    unModulateVector(*fillerTable[modFN][TN]);
 #endif
-  }
-  else if (TX_end_print){
-    TX_end_print = false;
-    LOG(ALERT) << "Done Transmitting";
-  }
+
 }
 
 void Transceiver::setModulus(int timeslot)
@@ -768,7 +770,7 @@ void Transceiver::driveTransmitFIFO()
       }
       // time to push burst to transmit FIFO
       pushRadioVector(mTransmitDeadlineClock);
-      mTransmitDeadlineClock.incTN();
+      mTransmitDeadlineClock.incTN();	
     }
     
   }
@@ -800,6 +802,10 @@ void *FIFOServiceLoopAdapter(Transceiver *transceiver)
 {
   transceiver->setPriority();
   
+<<<<<<< HEAD
+=======
+  //kurtis?
+>>>>>>> 8a7d009... tested and working
   while (1) {
     transceiver->driveReceiveFIFO();
     transceiver->driveTransmitFIFO();
