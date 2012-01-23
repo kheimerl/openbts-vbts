@@ -43,7 +43,7 @@
 
 #define TX_TIME 5 * 60
 
-time_t gLastPing = time(NULL);
+time_t gLastPing = NULL;
 
 bool TX_end_print = false;
 
