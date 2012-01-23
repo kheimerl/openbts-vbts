@@ -33,11 +33,17 @@
 #include "Transceiver.h"
 #include <Logger.h>
 
+//max noise seen USP:1.64514
+
+#ifdef USE_UHD
 #define OVERTHRESH 5000.0
+#else
+#define OVERTHRESH 1.5
+#endif
 
 #define TX_TIME 5 * 60
 
-time_t gLastPing;
+time_t gLastPing = time(NULL);
 
 bool TX_end_print = false;
 
@@ -181,13 +187,21 @@ void Transceiver::pushRadioVector(GSM::Time &nowTime)
     return;
   }
 
-  // otherwise, pull filler data, and push to radio FIFO
-  mRadioInterface->driveTransmitRadio(*(fillerTable[modFN][TN]),(mChanType[TN]==NONE));
+  //kurtis
+  //TX for TX_TIME 
+  time_t curtime = time(NULL);
+  if (gLastPing && difftime(curtime, gLastPing) < TX_TIME){
+    // otherwise, pull filler data, and push to radio FIFO
+    mRadioInterface->driveTransmitRadio(*(fillerTable[modFN][TN]),(mChanType[TN]==NONE));
 #ifdef TRANSMIT_LOGGING
-  if (nowTime.TN()==TRANSMIT_LOGGING) 
-    unModulateVector(*fillerTable[modFN][TN]);
+    if (nowTime.TN()==TRANSMIT_LOGGING) 
+      unModulateVector(*fillerTable[modFN][TN]);
 #endif
-
+  }
+  else if (TX_end_print){
+    TX_end_print = false;
+    LOG(ALERT) << "Done Transmitting";
+  }
 }
 
 void Transceiver::setModulus(int timeslot)
@@ -753,16 +767,7 @@ void Transceiver::driveTransmitFIFO()
         }
       }
       // time to push burst to transmit FIFO
-      //kurtis
-      //TX for TX_TIME 
-      time_t curtime = time(NULL);
-      if (gLastPing && difftime(curtime, gLastPing) < TX_TIME){
-	pushRadioVector(mTransmitDeadlineClock);
-      }
-      else if (TX_end_print){
-	TX_end_print = false;
-	LOG(ALERT) << "Done Transmitting";
-      }
+      pushRadioVector(mTransmitDeadlineClock);
       mTransmitDeadlineClock.incTN();
     }
     
