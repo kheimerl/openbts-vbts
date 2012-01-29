@@ -33,17 +33,12 @@
 #include "Transceiver.h"
 #include <Logger.h>
 
-<<<<<<< HEAD
-//max noise seen USP:1.64514
 
 #ifdef USE_UHD
 #define OVERTHRESH 5000.0
 #else
 #define OVERTHRESH 20.0
 #endif
-=======
-#define OVERTHRESH 5000.0
->>>>>>> ok testing and working
 
 #define TX_TIME 5 * 60
 
@@ -774,11 +769,6 @@ void Transceiver::driveTransmitFIFO()
         }
       }
       // time to push burst to transmit FIFO
-<<<<<<< HEAD
-      //kurtis commented this once
-      pushRadioVector(mTransmitDeadlineClock);
-      mTransmitDeadlineClock.incTN();	
-=======
       //kurtis
       //TX for TX_TIME 
       time_t curtime = time(NULL);
@@ -790,7 +780,6 @@ void Transceiver::driveTransmitFIFO()
 	LOG(ALERT) << "Done Transmitting";
       }
       mTransmitDeadlineClock.incTN();
->>>>>>> Fake PA controller. Couldn't test at home, too much noise.
     }
     
   }
