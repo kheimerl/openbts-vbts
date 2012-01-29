@@ -35,6 +35,21 @@
 
 extern ConfigurationTable gConfig;
 
+#include <xmlrpc-c/girerr.hpp>
+#include <xmlrpc-c/base.hpp>
+#include <xmlrpc-c/client_simple.hpp>
+
+//kurtis
+#define OVERTHRESH 5000.0
+#define XMLRPC_SERVER "http://127.0.0.1:8080"
+#define XMLRPC_METHOD "wakeup"
+
+using namespace std;
+
+xmlrpc_c::clientSimple XMLRPCClient;
+//this is ignored
+xmlrpc_c::value XMLRPCResult;
+
 Transceiver::Transceiver(int wBasePort,
 			 const char *TRXAddress,
 			 int wSamplesPerSymbol,
@@ -299,6 +314,19 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
   complex amplitude = 0.0;
   float TOA = 0.0;
   float avgPwr = 0.0;
+
+  //kurtis shit
+  if (energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold + OVERTHRESH,&avgPwr)) {
+    LOG(ALERT) << "Updating:" << sqrt(avgPwr) - mEnergyThreshold;
+    try{
+      XMLRPCClient.call(XMLRPC_SERVER, XMLRPC_METHOD, &XMLRPCResult);
+    } catch (exception const& e) {
+      LOG(ALERT) << "Client threw exception " << e.what();
+    } catch (...) {
+      LOG(ALERT) << "Client threw unknown exception";
+    }
+  }
+
   if (!energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold,&avgPwr)) {
      LOG(DEBUG) << "Estimated Energy: " << sqrt(avgPwr) << ", at time " << rxBurst->time();
      double framesElapsed = rxBurst->time()-prevFalseDetectionTime;
