@@ -40,6 +40,7 @@ extern ConfigurationTable gConfig;
 #include <xmlrpc-c/client_simple.hpp>
 
 //kurtis
+
 #define OVERTHRESH 10.0
 #define XMLRPC_SERVER "http://127.0.0.1:8080/RPC2"
 #define XMLRPC_METHOD "on"
