@@ -38,7 +38,7 @@
 #ifdef USE_UHD
 #define OVERTHRESH 5000.0
 #else
-#define OVERTHRESH 1.5
+#define OVERTHRESH 20.0
 #endif
 
 #define TX_TIME 5 * 60
