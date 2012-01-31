@@ -40,15 +40,13 @@ extern ConfigurationTable gConfig;
 #include <xmlrpc-c/client_simple.hpp>
 
 //kurtis
-#define OVERTHRESH 5000.0
-#define XMLRPC_SERVER "http://127.0.0.1:8080"
-#define XMLRPC_METHOD "wakeup"
+#define OVERTHRESH 10.0
+#define XMLRPC_SERVER "http://127.0.0.1:8080/RPC2"
+#define XMLRPC_METHOD "on"
 
 using namespace std;
 
 xmlrpc_c::clientSimple XMLRPCClient;
-//this is ignored
-xmlrpc_c::value XMLRPCResult;
 
 Transceiver::Transceiver(int wBasePort,
 			 const char *TRXAddress,
@@ -322,6 +320,8 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
     mRadioInterface->pa.on();
 =======
     try{
+      //this is ignored
+      xmlrpc_c::value XMLRPCResult;
       XMLRPCClient.call(XMLRPC_SERVER, XMLRPC_METHOD, &XMLRPCResult);
     } catch (exception const& e) {
       LOG(ALERT) << "Client threw exception " << e.what();
