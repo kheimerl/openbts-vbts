@@ -33,7 +33,7 @@ else
 AM_CPPFLAGS = $(STD_DEFINES_AND_INCLUDES)
 endif
 endif
-AM_CXXFLAGS = -ldl -lpthread
+AM_CXXFLAGS = -ldl -lpthread -lxmlrpc++ -lxmlrpc_xmlparse -lxmlrpc_xmltok -lxmlrpc_server -lxmlrpc_util -lxmlrpc_server++ -lxmlrpc_server_abyss -lxmlrpc_server_abyss++
 
 rev2dir = $(datadir)/usrp/rev2
 rev4dir = $(datadir)/usrp/rev4
@@ -53,6 +53,7 @@ COMMON_SOURCES = \
 	radioClock.cpp \
 	sigProcLib.cpp \
 	Transceiver.cpp \
+	PAController.cpp \
 	DummyLoad.cpp
 
 if RESAMPLE
@@ -78,6 +79,7 @@ noinst_HEADERS = \
 	radioDevice.h \
 	sigProcLib.h \
 	Transceiver.h \
+	PAController.h \
 	USRPDevice.h \
 	DummyLoad.h \
 	rcvLPF_651.h \
