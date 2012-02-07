@@ -37,14 +37,13 @@
 #include <stdio.h>
 #include <time.h>
 #include <Logger.h>
-#include <fcntl.h>
-#include <string.h>
 #include "PAController.h"
-#include "config.h"
 
-#if defined USE_UHD || defined USE_USRP1
-#define DONT_USE_SERIAL 1
-#endif
+//XMLRPC stuff
+#include <cassert>
+#include <stdexcept>
+#include <iostream>
+#include <unistd.h>
 
 using namespace std;
 
@@ -52,72 +51,25 @@ using namespace std;
 
 #define RPC_PORT 8080
 #define RPC_LOG_LOC "/tmp/xmlrpc.log"
-#define PA_TIMEOUT 5 * 60
-#define SERIAL_LOC "/dev/ttyACM0"
-#define ON_CMD "O0=1\r"
-#define OFF_CMD "O0=0\r"
-//#define PA_TIMEOUT 5
 
 static bool pa_on = false;
-static Mutex pa_lock;
-static time_t last_update = NULL;
-//hack for now, as I want one source file for both RAD1 and UHD/USRP1
-#ifndef DONT_USE_SERIAL
-int fd1 = open (SERIAL_LOC, O_RDWR | O_NOCTTY | O_NDELAY);
-#endif
-
-/* assumes you hold the lock */
-static void actual_pa_off(){
-  LOG(ALERT) << "PA Off";
-  pa_on = false;
-#ifndef DONT_USE_SERIAL
-  fcntl(fd1,F_SETFL,0);
-  write(fd1,OFF_CMD, strlen(OFF_CMD));
-#endif
-}
-
-static void turn_pa_on(bool resetTime){
-  ScopedLock lock (pa_lock);
-  //don't think I need to garbage collect, it's just an int
-  if (!pa_on || resetTime){
-    LOG(ALERT) << "PA On";
-    last_update = time(NULL);
-    pa_on = true;
-#ifndef DONT_USE_SERIAL
-    fcntl(fd1,F_SETFL,0);
-    write(fd1,ON_CMD, strlen(ON_CMD));
-#endif
-  }
-}
-
-static void turn_pa_off(){
-  ScopedLock lock (pa_lock);
-  actual_pa_off();
-}
-
-/* key point: this is being called all the time
-   by the transceiver, allowing it to be updated
-   almost immediately after time stamp ends */
-bool update_pa(){
-  ScopedLock lock (pa_lock);
-  if (pa_on && last_update && 
-      time(NULL) > PA_TIMEOUT + last_update){
-    actual_pa_off();
-  }
-  return pa_on;
-}
+>>>>>>> 6712a11... New RPC server hosted by the transceiver
 
 //the "turn the PA on method"
 class on_method : public xmlrpc_c::method {
 public:
   on_method() {
+    // signature and help strings are documentation -- the client
+    // can query this information with a system.methodSignature and
+    // system.methodHelp RPC.
     this->_signature = "n:";
     this->_help = "This method turns the PA on";
   }
   void
   execute(xmlrpc_c::paramList const& paramList,
 	  xmlrpc_c::value *   const  retvalP) {
-    turn_pa_on(true);
+    LOG(ALERT) << "Kurtis: Network ON";
+    pa_on = true;
     *retvalP = xmlrpc_c::value_nil();
   }
 };
@@ -132,7 +84,8 @@ public:
   void
   execute(xmlrpc_c::paramList const& paramList,
 	  xmlrpc_c::value *   const  retvalP) {
-    turn_pa_off();
+    LOG(ALERT) << "Kurtis: Network OFF";
+    pa_on = false;
     *retvalP = xmlrpc_c::value_nil();
   }
 };
@@ -141,13 +94,16 @@ public:
 class status_method : public xmlrpc_c::method {
 public:
   status_method() {
+    // signature and help strings are documentation -- the client
+    // can query this information with a system.methodSignature and
+    // system.methodHelp RPC.
     this->_signature = "b:";
     this->_help = "This method returns the PA status";
   }
   void
   execute(xmlrpc_c::paramList const& paramList,
 	  xmlrpc_c::value *   const  retvalP) {
-    *retvalP = xmlrpc_c::value_boolean(update_pa());
+    *retvalP = xmlrpc_c::value_boolean(pa_on);
   }
 };
 
@@ -183,17 +139,19 @@ void PAController::run()
 
 void PAController::on()
 {
-  turn_pa_on(false);
+  pa_on = true;
+  LOG(ALERT) << "Kurtis: Local ON";
 }
 
 void PAController::off()
 {
-  turn_pa_off();
+  pa_on = false;
+  LOG(ALERT) << "Kurtis: Local OFF";
 }
 
 bool PAController::state()
 {
-  return update_pa();
+  return pa_on;
 }
 
 /* non-member functions */
@@ -201,5 +159,4 @@ void runController(PAController* cont)
 {
   Thread RPCThread;
   RPCThread.start((void*(*)(void*)) &PAController::run, cont);
-  cont->on();
 }

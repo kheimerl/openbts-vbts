@@ -35,18 +35,10 @@
 
 
 #ifdef USE_UHD
-#define OVERTHRESH 5000.0
+#define OVERTHRESH 3000.0
 #else
 #define OVERTHRESH 20.0
 #endif
-
-#define TX_TIME 5 * 60
-
-time_t gLastPing = NULL;
-
-bool TX_end_print = false;
-
-bool TX_end_print = false;
 
 Transceiver::Transceiver(int wBasePort,
 			 const char *TRXAddress,
@@ -118,7 +110,6 @@ Transceiver::~Transceiver()
 }
   
 
-//kurtis?
 void Transceiver::addRadioVector(BitVector &burst,
 				 int RSSI,
 				 GSM::Time &wTime)
@@ -127,7 +118,7 @@ void Transceiver::addRadioVector(BitVector &burst,
   //kurtis
   //TX for TX_TIME 
   time_t curtime = time(NULL);
-  if (gLastPing && difftime(curtime, gLastPing) < TX_TIME){  
+  if (pa.state()){  
     signalVector* modBurst = modulateBurst(burst,*gsmPulse,
 					   8 + (wTime.TN() % 4 == 0),
 					   mSamplesPerSymbol);
@@ -135,10 +126,6 @@ void Transceiver::addRadioVector(BitVector &burst,
     radioVector *newVec = new radioVector(*modBurst,wTime);
     mTransmitPriorityQueue.write(newVec);
     delete modBurst;
-  }
-  else if (TX_end_print){
-    TX_end_print = false;
-    LOG(ALERT) << "Done Transmitting";
   }
 }
 
@@ -325,11 +312,8 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
 
   //kurtis shit
   if (energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold + OVERTHRESH,&avgPwr)) {
-    LOG(ALERT) << "Updating:" << sqrt(avgPwr) - mEnergyThreshold;
-    time(&gLastPing);
-    if (!TX_end_print){
-      TX_end_print = true;
-    }
+    //LOG(ALERT) << "Updating:" << sqrt(avgPwr) - mEnergyThreshold;
+    pa.on();
   }
 
   if (!energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold,&avgPwr)) {
@@ -453,6 +437,7 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
 void Transceiver::start()
 {
   mControlServiceLoopThread->start((void * (*)(void*))ControlServiceLoopAdapter,(void*) this);
+  pa.run();
 }
 
 void Transceiver::reset()
@@ -811,11 +796,7 @@ void Transceiver::writeClockInterface()
 void *FIFOServiceLoopAdapter(Transceiver *transceiver)
 {
   transceiver->setPriority();
-  
-<<<<<<< HEAD
-=======
   //kurtis?
->>>>>>> 8a7d009... tested and working
   while (1) {
     transceiver->driveReceiveFIFO();
     transceiver->driveTransmitFIFO();

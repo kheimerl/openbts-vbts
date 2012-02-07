@@ -41,8 +41,6 @@
 #include <xmlrpc-c/registry.hpp>
 #include <xmlrpc-c/server_abyss.hpp>
 
-bool update_pa();
-
 class PAController
 {
   
@@ -62,4 +60,4 @@ class PAController
 
 void runController(PAController* cont);
 
-#endif //PACONTROLLER_H
+#endif
