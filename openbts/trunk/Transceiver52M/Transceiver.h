@@ -33,6 +33,7 @@
 #include "Interthread.h"
 #include "GSMCommon.h"
 #include "Sockets.h"
+#include "PAController.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -66,6 +67,7 @@ private:
   RadioInterface *mRadioInterface;	  ///< associated radioInterface object
   double txFullScale;                     ///< full scale input to radio
   double rxFullScale;                     ///< full scale output to radio
+  PAController::PAController pa;
 
   /** Codes for burst types of received bursts*/
   typedef enum {
