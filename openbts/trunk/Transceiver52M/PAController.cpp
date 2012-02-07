@@ -39,37 +39,59 @@
 #include <Logger.h>
 #include "PAController.h"
 
-//XMLRPC stuff
-#include <cassert>
-#include <stdexcept>
-#include <iostream>
-#include <unistd.h>
-
 using namespace std;
 
 //I hate C++ -kurtis
 
 #define RPC_PORT 8080
 #define RPC_LOG_LOC "/tmp/xmlrpc.log"
+#define PA_TIMEOUT 5 * 60
+//#define PA_TIMEOUT 5
 
 static bool pa_on = false;
->>>>>>> 6712a11... New RPC server hosted by the transceiver
+static Mutex pa_lock;
+static time_t last_update = NULL;
+
+/* assumes you hold the lock */
+static void actual_pa_off(){
+  LOG(ALERT) << "PA Off";
+  pa_on = false;
+}
+
+static void turn_pa_on(){
+  ScopedLock lock (pa_lock);
+  pa_on = true;
+  //might need to garbage collect here
+  last_update = time(NULL);
+  LOG(ALERT) << "PA On";
+}
+
+static void turn_pa_off(){
+  ScopedLock lock (pa_lock);
+  actual_pa_off();
+}
+
+static bool update_pa(){
+  ScopedLock lock (pa_lock);
+  if (pa_on && last_update && 
+      time(NULL) > PA_TIMEOUT + last_update){
+    actual_pa_off();
+  }
+  return pa_on;
+}
+>>>>>>> 7d16ec9... timing working
 
 //the "turn the PA on method"
 class on_method : public xmlrpc_c::method {
 public:
   on_method() {
-    // signature and help strings are documentation -- the client
-    // can query this information with a system.methodSignature and
-    // system.methodHelp RPC.
     this->_signature = "n:";
     this->_help = "This method turns the PA on";
   }
   void
   execute(xmlrpc_c::paramList const& paramList,
 	  xmlrpc_c::value *   const  retvalP) {
-    LOG(ALERT) << "Kurtis: Network ON";
-    pa_on = true;
+    turn_pa_on();
     *retvalP = xmlrpc_c::value_nil();
   }
 };
@@ -84,8 +106,7 @@ public:
   void
   execute(xmlrpc_c::paramList const& paramList,
 	  xmlrpc_c::value *   const  retvalP) {
-    LOG(ALERT) << "Kurtis: Network OFF";
-    pa_on = false;
+    turn_pa_off();
     *retvalP = xmlrpc_c::value_nil();
   }
 };
@@ -94,16 +115,14 @@ public:
 class status_method : public xmlrpc_c::method {
 public:
   status_method() {
-    // signature and help strings are documentation -- the client
-    // can query this information with a system.methodSignature and
-    // system.methodHelp RPC.
     this->_signature = "b:";
     this->_help = "This method returns the PA status";
   }
   void
   execute(xmlrpc_c::paramList const& paramList,
 	  xmlrpc_c::value *   const  retvalP) {
-    *retvalP = xmlrpc_c::value_boolean(pa_on);
+    ScopedLock lock (pa_lock);
+    *retvalP = xmlrpc_c::value_boolean(update_pa());
   }
 };
 
@@ -139,19 +158,21 @@ void PAController::run()
 
 void PAController::on()
 {
-  pa_on = true;
-  LOG(ALERT) << "Kurtis: Local ON";
+  turn_pa_on();
 }
 
 void PAController::off()
 {
-  pa_on = false;
-  LOG(ALERT) << "Kurtis: Local OFF";
+  turn_pa_off();
 }
 
+/* key point: this is being called all the time
+   by the transceiver, allowing it to be updated
+   almost immediately after time stamp ends */
 bool PAController::state()
 {
-  return pa_on;
+  ScopedLock lock(pa_lock);
+  return update_pa();
 }
 
 /* non-member functions */
@@ -159,4 +180,5 @@ void runController(PAController* cont)
 {
   Thread RPCThread;
   RPCThread.start((void*(*)(void*)) &PAController::run, cont);
+  cont->off();
 }
