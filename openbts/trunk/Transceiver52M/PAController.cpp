@@ -40,6 +40,11 @@
 #include <fcntl.h>
 #include <string.h>
 #include "PAController.h"
+#include "config.h"
+
+#if defined USE_UHD || defined USE_USRP1
+#define DONT_USE_SERIAL 1
+#endif
 
 using namespace std;
 
@@ -56,24 +61,31 @@ using namespace std;
 static bool pa_on = false;
 static Mutex pa_lock;
 static time_t last_update = NULL;
+//hack for now, as I want one source file for both RAD1 and UHD/USRP1
+#ifndef DONT_USE_SERIAL
 int fd1 = open (SERIAL_LOC, O_RDWR | O_NOCTTY | O_NDELAY);
+#endif
 
 /* assumes you hold the lock */
 static void actual_pa_off(){
   LOG(ALERT) << "PA Off";
   pa_on = false;
+#ifndef DONT_USE_SERIAL
   fcntl(fd1,F_SETFL,0);
   write(fd1,OFF_CMD, strlen(OFF_CMD));
+#endif
 }
 
 static void turn_pa_on(){
   ScopedLock lock (pa_lock);
+  LOG(ALERT) << "PA On";
   pa_on = true;
-  //might need to garbage collect here
+  //don't think I need to garbage collect, it's just an int
   last_update = time(NULL);
+#ifndef DONT_USE_SERIAL
   fcntl(fd1,F_SETFL,0);
   write(fd1,ON_CMD, strlen(ON_CMD));
-  LOG(ALERT) << "PA On";
+#endif
 }
 
 static void turn_pa_off(){
