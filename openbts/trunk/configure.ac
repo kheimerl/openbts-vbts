@@ -85,6 +85,7 @@ AC_ARG_WITH(extref, [
 AS_IF([test "x$with_usrp1" = "xyes"], [
     # Defines USRP_CFLAGS, USRP_INCLUDEDIR, and USRP_LIBS
     PKG_CHECK_MODULES(USRP, usrp > 3.1)
+    AC_DEFINE(USE_USRP1, 1, Define to 1 if using USRP1)	
     # Check whether we have libusrp >= 3.2
     PKG_CHECK_EXISTS(usrp >= 3.2, libusrp_3_2=yes, libusrp_3_2=no)
     if test "x$libusrp_3_2" = "xyes";then
