@@ -21,7 +21,7 @@
 include $(top_srcdir)/Makefile.common
 
 AM_CPPFLAGS = $(STD_DEFINES_AND_INCLUDES) $(USB_INCLUDES) $(WITH_INCLUDES)
-AM_CXXFLAGS = -DOMNITHREAD_POSIX=1 -lusb-1.0 -ldl -lpthread -lxmlrpc_client++ -lxmlrpc++ -lxmlrpc_client -lxmlrpc_xmlparse -lxmlrpc_xmltok
+AM_CXXFLAGS = -DOMNITHREAD_POSIX=1 -lusb-1.0 -ldl -lpthread -lxmlrpc++ -lxmlrpc_xmlparse -lxmlrpc_xmltok -lxmlrpc_server -lxmlrpc_util -lxmlrpc_server++ -lxmlrpc_server_abyss -lxmlrpc_server_abyss++
 
 EXTRA_DIST = \
 	README \

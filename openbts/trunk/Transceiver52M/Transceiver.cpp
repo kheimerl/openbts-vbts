@@ -116,8 +116,6 @@ void Transceiver::addRadioVector(BitVector &burst,
 {
   // modulate and stick into queue 
   //kurtis
-  //TX for TX_TIME 
-  time_t curtime = time(NULL);
   if (pa.state()){  
     signalVector* modBurst = modulateBurst(burst,*gsmPulse,
 					   8 + (wTime.TN() % 4 == 0),

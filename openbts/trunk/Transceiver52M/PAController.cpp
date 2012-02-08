@@ -79,7 +79,6 @@ static bool update_pa(){
   }
   return pa_on;
 }
->>>>>>> 7d16ec9... timing working
 
 //the "turn the PA on method"
 class on_method : public xmlrpc_c::method {
