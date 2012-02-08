@@ -26,8 +26,8 @@
 
 #include <stdlib.h>
 
-#include "Transceiver.h"
 #include "RAD1Device.h"
+#include "Transceiver.h"
 #include "DummyLoad.h"
 
 #include <time.h>

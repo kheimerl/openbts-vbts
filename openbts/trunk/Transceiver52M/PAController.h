@@ -60,4 +60,4 @@ class PAController
 
 void runController(PAController* cont);
 
-#endif
+#endif //PACONTROLLER_H

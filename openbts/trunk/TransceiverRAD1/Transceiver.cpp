@@ -35,19 +35,11 @@
 
 extern ConfigurationTable gConfig;
 
-#include <xmlrpc-c/girerr.hpp>
-#include <xmlrpc-c/base.hpp>
-#include <xmlrpc-c/client_simple.hpp>
-
 //kurtis
 
 #define OVERTHRESH 10.0
-#define XMLRPC_SERVER "http://127.0.0.1:8080/RPC2"
-#define XMLRPC_METHOD "on"
 
 using namespace std;
-
-xmlrpc_c::clientSimple XMLRPCClient;
 
 Transceiver::Transceiver(int wBasePort,
 			 const char *TRXAddress,
@@ -123,15 +115,17 @@ void Transceiver::addRadioVector(BitVector &burst,
 				 int RSSI,
 				 GSM::Time &wTime)
 {
-  // modulate and stick into queue 
-  signalVector* modBurst = modulateBurst(burst,*gsmPulse,
-					 8 + (wTime.TN() % 4 == 0),
-					 mSamplesPerSymbol);
-  scaleVector(*modBurst,txFullScale * pow(10,-RSSI/10));
-  radioVector *newVec = new radioVector(*modBurst,wTime);
-  mTransmitPriorityQueue.write(newVec);
-
-  delete modBurst;
+  // modulate and stick into queue
+  //kurtis
+  if (pa.state()){
+    signalVector* modBurst = modulateBurst(burst,*gsmPulse,
+					   8 + (wTime.TN() % 4 == 0),
+					   mSamplesPerSymbol);
+    scaleVector(*modBurst,txFullScale * pow(10,-RSSI/10));
+    radioVector *newVec = new radioVector(*modBurst,wTime);
+    mTransmitPriorityQueue.write(newVec);
+    delete modBurst;
+  }
 }
 
 #ifdef TRANSMIT_LOGGING
@@ -317,16 +311,8 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
 
   //kurtis shit
   if (energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold + OVERTHRESH,&avgPwr)) {
-    LOG(ALERT) << "Updating:" << sqrt(avgPwr) - mEnergyThreshold;
-    try{
-      //this is ignored
-      xmlrpc_c::value XMLRPCResult;
-      XMLRPCClient.call(XMLRPC_SERVER, XMLRPC_METHOD, &XMLRPCResult);
-    } catch (exception const& e) {
-      LOG(ALERT) << "Client threw exception " << e.what();
-    } catch (...) {
-      LOG(ALERT) << "Client threw unknown exception";
-    }
+    //LOG(ALERT) << "Updating:" << sqrt(avgPwr) - mEnergyThreshold;
+    pa.on();
   }
 
   if (!energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold,&avgPwr)) {
@@ -448,6 +434,7 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
 void Transceiver::start()
 {
   mControlServiceLoopThread->start((void * (*)(void*))ControlServiceLoopAdapter,(void*) this);
+  pa.run();
 }
 
 void Transceiver::reset()

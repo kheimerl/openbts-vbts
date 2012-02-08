@@ -33,6 +33,7 @@
 #include "Interthread.h"
 #include "GSMCommon.h"
 #include "Sockets.h"
+#include "PAController.h"
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -57,7 +58,7 @@ private:
   VectorFIFO*  mReceiveFIFO;      ///< radioInterface FIFO of receive bursts 
 
   Thread *mFIFOServiceLoopThread;  ///< thread to push/pull bursts into transmit/receive FIFO
-  Thread *mControlServiceLoopThread;       ///< thread to process control messages from GSM core
+  Thread *mControlServiceLoopThread;       ///< thread to process control messag'es from GSM core
   Thread *mTransmitPriorityQueueServiceLoopThread;///< thread to process transmit bursts from GSM core
 
   GSM::Time mTransmitDeadlineClock;       ///< deadline for pushing bursts into transmit FIFO 
@@ -66,6 +67,8 @@ private:
   RadioInterface *mRadioInterface;	  ///< associated radioInterface object
   double txFullScale;                     ///< full scale input to radio
   double rxFullScale;                     ///< full scale output to radio
+
+  PAController::PAController pa;
 
   /** Codes for burst types of received bursts*/
   typedef enum {
@@ -204,4 +207,3 @@ void *ControlServiceLoopAdapter(Transceiver *);
 
 /** transmit queueing thread loop */
 void *TransmitPriorityQueueServiceLoopAdapter(Transceiver *);
-
