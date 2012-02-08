@@ -37,6 +37,8 @@
 #include <stdio.h>
 #include <time.h>
 #include <Logger.h>
+#include <fcntl.h>
+#include <string.h>
 #include "PAController.h"
 
 using namespace std;
@@ -46,16 +48,22 @@ using namespace std;
 #define RPC_PORT 8080
 #define RPC_LOG_LOC "/tmp/xmlrpc.log"
 #define PA_TIMEOUT 5 * 60
+#define SERIAL_LOC "/dev/ttyACM0"
+#define ON_CMD "O0=1\r"
+#define OFF_CMD "O0=0\r"
 //#define PA_TIMEOUT 5
 
 static bool pa_on = false;
 static Mutex pa_lock;
 static time_t last_update = NULL;
+int fd1 = open (SERIAL_LOC, O_RDWR | O_NOCTTY | O_NDELAY);
 
 /* assumes you hold the lock */
 static void actual_pa_off(){
   LOG(ALERT) << "PA Off";
   pa_on = false;
+  fcntl(fd1,F_SETFL,0);
+  write(fd1,OFF_CMD, strlen(OFF_CMD));
 }
 
 static void turn_pa_on(){
@@ -63,6 +71,8 @@ static void turn_pa_on(){
   pa_on = true;
   //might need to garbage collect here
   last_update = time(NULL);
+  fcntl(fd1,F_SETFL,0);
+  write(fd1,ON_CMD, strlen(ON_CMD));
   LOG(ALERT) << "PA On";
 }
 
