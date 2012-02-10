@@ -753,16 +753,7 @@ void Transceiver::driveTransmitFIFO()
         }
       }
       // time to push burst to transmit FIFO
-      //kurtis
-      //TX for TX_TIME 
-      time_t curtime = time(NULL);
-      if (gLastPing && difftime(curtime, gLastPing) < TX_TIME){
-	pushRadioVector(mTransmitDeadlineClock);
-      }
-      else if (TX_end_print){
-	TX_end_print = false;
-	LOG(ALERT) << "Done Transmitting";
-      }
+      pushRadioVector(mTransmitDeadlineClock);
       mTransmitDeadlineClock.incTN();
     }
     
