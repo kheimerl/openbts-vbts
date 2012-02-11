@@ -116,16 +116,13 @@ void Transceiver::addRadioVector(BitVector &burst,
 				 GSM::Time &wTime)
 {
   // modulate and stick into queue
-  //kurtis
-  if (update_pa){
-    signalVector* modBurst = modulateBurst(burst,*gsmPulse,
-					   8 + (wTime.TN() % 4 == 0),
-					   mSamplesPerSymbol);
-    scaleVector(*modBurst,txFullScale * pow(10,-RSSI/10));
-    radioVector *newVec = new radioVector(*modBurst,wTime);
-    mTransmitPriorityQueue.write(newVec);
-    delete modBurst;
-  }
+  signalVector* modBurst = modulateBurst(burst,*gsmPulse,
+					 8 + (wTime.TN() % 4 == 0),
+					 mSamplesPerSymbol);
+  scaleVector(*modBurst,txFullScale * pow(10,-RSSI/10));
+  radioVector *newVec = new radioVector(*modBurst,wTime);
+  mTransmitPriorityQueue.write(newVec);
+  delete modBurst;
 }
 
 #ifdef TRANSMIT_LOGGING
@@ -321,7 +318,7 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
       LOG(ALERT) << "Client threw unknown exception";
     }
     //LOG(ALERT) << "Updating:" << sqrt(avgPwr) - mEnergyThreshold;
-    pa.on();
+    mRadioInterface->pa.on();
   }
 
   if (!energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold,&avgPwr)) {
@@ -443,7 +440,6 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
 void Transceiver::start()
 {
   mControlServiceLoopThread->start((void * (*)(void*))ControlServiceLoopAdapter,(void*) this);
-  runController(&pa);
 }
 
 void Transceiver::reset()

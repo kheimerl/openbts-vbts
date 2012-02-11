@@ -165,25 +165,24 @@ bool started = false;
 void RadioInterface::pushBuffer(void) {
 
   if (sendCursor < 2*INCHUNK*samplesPerSymbol) return;
-  
-  int samplesWritten;
-  
+
   if (pa.state()){
     // send resampleVector
-    samplesWritten = mRadio->writeSamples(sendBuffer,
-					  INCHUNK*samplesPerSymbol,
-					  &underrun,
-					  writeTimestamp); 
+    int samplesWritten = mRadio->writeSamples(sendBuffer,
+					      INCHUNK*samplesPerSymbol,
+					      &underrun,
+					      writeTimestamp); 
     //LOG(DEBUG) << "writeTimestamp: " << writeTimestamp << ", samplesWritten: " << samplesWritten;
+    
+    writeTimestamp += (TIMESTAMP) samplesWritten;
+    
+    if (sendCursor > 2*samplesWritten) 
+      memcpy(sendBuffer,sendBuffer+samplesWritten*2,sizeof(short)*2*(sendCursor-2*samplesWritten));
+    sendCursor = sendCursor - 2*samplesWritten;
   } else {
-    samplesWritten = INCHUNK*samplesPerSymbol;
+    //guess at length -kurtis
+    writeTimestamp += INCHUNK*samplesPerSymbol;
   }
-    
-  writeTimestamp += (TIMESTAMP) samplesWritten;
-    
-  if (sendCursor > 2*samplesWritten) 
-    memcpy(sendBuffer,sendBuffer+samplesWritten*2,sizeof(short)*2*(sendCursor-2*samplesWritten));
-  sendCursor = sendCursor - 2*samplesWritten;
 }
 
 

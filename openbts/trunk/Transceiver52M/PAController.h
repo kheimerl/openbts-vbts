@@ -52,6 +52,7 @@ class PAController
   void run();
   void on();
   void off();
+  bool state();
   
  private:
   xmlrpc_c::registry* registry;
