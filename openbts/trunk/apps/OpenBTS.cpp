@@ -50,6 +50,7 @@ ConfigurationTable gConfig("/etc/OpenBTS/OpenBTS.db");
 #include <Configuration.h>
 #include <PhysicalStatus.h>
 #include <SubscriberRegistry.h>
+#include <PARPCClient.h>
 
 #include <sys/wait.h>
 
@@ -95,6 +96,9 @@ TransceiverManager gTRX(gConfig.getStr("TRX.IP").c_str(), gConfig.getNum("TRX.Po
 
 // Subscriber registry
 SubscriberRegistry gSubscriberRegistry;
+
+//kurtis
+PARPCClient gRPCClient;
 
 
 /** Define a function to call any time the configuration database changes. */
