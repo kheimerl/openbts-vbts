@@ -20,6 +20,7 @@
 #include "radioDevice.h"
 #include "radioVector.h"
 #include "radioClock.h"
+#include "PAController.h"
 
 /** samples per GSM symbol */
 #define SAMPSPERSYM 1 
@@ -140,6 +141,8 @@ public:
 
   /** get transport bus type of attached device */ 
   enum RadioDevice::busType getBus() { return mRadio->getBus(); }
+
+  PAController::PAController pa;
 
 protected:
 
