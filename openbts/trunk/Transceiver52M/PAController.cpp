@@ -95,7 +95,10 @@ static void turn_pa_off(){
   actual_pa_off();
 }
 
-static bool update_pa(){
+/* key point: this is being called all the time
+   by the transceiver, allowing it to be updated
+   almost immediately after time stamp ends */
+bool update_pa(){
   ScopedLock lock (pa_lock);
   if (pa_on && last_update && 
       time(NULL) > PA_TIMEOUT + last_update){
@@ -188,18 +191,10 @@ void PAController::off()
   turn_pa_off();
 }
 
-/* key point: this is being called all the time
-   by the transceiver, allowing it to be updated
-   almost immediately after time stamp ends */
-bool PAController::state()
-{
-  return update_pa();
-}
-
 /* non-member functions */
 void runController(PAController* cont)
 {
   Thread RPCThread;
   RPCThread.start((void*(*)(void*)) &PAController::run, cont);
-  cont->off();
+  cont->on();
 }

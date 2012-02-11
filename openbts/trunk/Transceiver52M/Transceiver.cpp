@@ -116,7 +116,7 @@ void Transceiver::addRadioVector(BitVector &burst,
 {
   // modulate and stick into queue 
   //kurtis
-  if (pa.state()){  
+  if (update_pa()){  
     signalVector* modBurst = modulateBurst(burst,*gsmPulse,
 					   8 + (wTime.TN() % 4 == 0),
 					   mSamplesPerSymbol);
@@ -435,7 +435,7 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
 void Transceiver::start()
 {
   mControlServiceLoopThread->start((void * (*)(void*))ControlServiceLoopAdapter,(void*) this);
-  pa.run();
+  runController(&pa);
 }
 
 void Transceiver::reset()
