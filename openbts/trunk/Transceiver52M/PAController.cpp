@@ -191,6 +191,11 @@ void PAController::off()
   turn_pa_off();
 }
 
+bool PAController::state()
+{
+  return update_pa();
+}
+
 /* non-member functions */
 void runController(PAController* cont)
 {
