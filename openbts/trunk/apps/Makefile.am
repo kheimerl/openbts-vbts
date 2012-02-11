@@ -22,7 +22,7 @@
 include $(top_srcdir)/Makefile.common
 
 AM_CPPFLAGS = $(STD_DEFINES_AND_INCLUDES)
-AM_CXXFLAGS = -Wall -ldl -pthread
+AM_CXXFLAGS = -Wall -ldl -pthread -lxmlrpc++ -lxmlrpc_xmlparse -lxmlrpc_xmltok -lxmlrpc_client -lxmlrpc_util -lxmlrpc_client++
 
 noinst_PROGRAMS = \
 	OpenBTS

@@ -76,16 +76,18 @@ static void actual_pa_off(){
 #endif
 }
 
-static void turn_pa_on(){
+static void turn_pa_on(bool resetTime){
   ScopedLock lock (pa_lock);
-  LOG(ALERT) << "PA On";
-  pa_on = true;
   //don't think I need to garbage collect, it's just an int
-  last_update = time(NULL);
+  if (!pa_on || resetTime){
+    LOG(ALERT) << "PA On";
+    last_update = time(NULL);
+    pa_on = true;
 #ifndef DONT_USE_SERIAL
-  fcntl(fd1,F_SETFL,0);
-  write(fd1,ON_CMD, strlen(ON_CMD));
+    fcntl(fd1,F_SETFL,0);
+    write(fd1,ON_CMD, strlen(ON_CMD));
 #endif
+  }
 }
 
 static void turn_pa_off(){
@@ -112,7 +114,7 @@ public:
   void
   execute(xmlrpc_c::paramList const& paramList,
 	  xmlrpc_c::value *   const  retvalP) {
-    turn_pa_on();
+    turn_pa_on(true);
     *retvalP = xmlrpc_c::value_nil();
   }
 };
@@ -142,7 +144,6 @@ public:
   void
   execute(xmlrpc_c::paramList const& paramList,
 	  xmlrpc_c::value *   const  retvalP) {
-    ScopedLock lock (pa_lock);
     *retvalP = xmlrpc_c::value_boolean(update_pa());
   }
 };
@@ -179,7 +180,7 @@ void PAController::run()
 
 void PAController::on()
 {
-  turn_pa_on();
+  turn_pa_on(false);
 }
 
 void PAController::off()
@@ -192,7 +193,6 @@ void PAController::off()
    almost immediately after time stamp ends */
 bool PAController::state()
 {
-  ScopedLock lock(pa_lock);
   return update_pa();
 }
 
