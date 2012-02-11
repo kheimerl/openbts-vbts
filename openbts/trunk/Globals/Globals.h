@@ -36,6 +36,7 @@
 #include <PhysicalStatus.h>
 #include <TMSITable.h>
 #include <SubscriberRegistry.h>
+#include <PARPCClient.h>
 
 
 
@@ -62,5 +63,7 @@ extern GSM::PhysicalStatus gPhysStatus;
 
 /** The subscriber registry */
 extern SubscriberRegistry gSubscriberRegistry;
+
+extern PARPCClient gRPCClient;
 
 #endif
