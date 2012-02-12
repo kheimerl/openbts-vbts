@@ -181,6 +181,7 @@ void RadioInterface::pushBuffer(void) {
     sendCursor = sendCursor - 2*samplesWritten;
   } else {
     //guess at length -kurtis
+    //it's len/2/sizeof(short); in writeSample
     writeTimestamp += INCHUNK*samplesPerSymbol;
   }
 }
