@@ -240,6 +240,8 @@ void RadioInterface::start()
   sendBuffer = new short[2*2*INCHUNK*samplesPerSymbol];
   rcvBuffer = new short[2*2*OUTCHUNK*samplesPerSymbol];
  
+  runController(&pa);
+
   mOn = true;
 
 }
