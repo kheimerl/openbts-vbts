@@ -37,7 +37,7 @@ extern ConfigurationTable gConfig;
 
 //kurtis
 
-#define OVERTHRESH 10.0
+#define OVERTHRESH 100.0
 
 using namespace std;
 
@@ -308,16 +308,7 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
 
   //kurtis shit
   if (energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold + OVERTHRESH,&avgPwr)) {
-    try{
-      //this is ignored
-      xmlrpc_c::value XMLRPCResult;
-      XMLRPCClient.call(XMLRPC_SERVER, XMLRPC_METHOD, &XMLRPCResult);
-    } catch (exception const& e) {
-      LOG(ALERT) << "Client threw exception " << e.what();
-    } catch (...) {
-      LOG(ALERT) << "Client threw unknown exception";
-    }
-    //LOG(ALERT) << "Updating:" << sqrt(avgPwr) - mEnergyThreshold;
+    LOG(ALERT) << "Updating:" << sqrt(avgPwr) - mEnergyThreshold;
     mRadioInterface->pa.on();
   }
 
