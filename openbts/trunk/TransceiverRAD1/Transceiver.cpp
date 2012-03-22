@@ -37,7 +37,7 @@ extern ConfigurationTable gConfig;
 
 //kurtis
 
-#define OVERTHRESH 10.0
+#define OVERTHRESH 100.0
 
 using namespace std;
 
@@ -308,7 +308,7 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
 
   //kurtis shit
   if (energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold + OVERTHRESH,&avgPwr)) {
-    //LOG(ALERT) << "Updating:" << sqrt(avgPwr) - mEnergyThreshold;
+    LOG(ALERT) << "Updating:" << sqrt(avgPwr) - mEnergyThreshold;
     mRadioInterface->pa.on();
   }
 
