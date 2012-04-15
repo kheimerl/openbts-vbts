@@ -237,7 +237,7 @@ public:
   /** returns the full-scale receive amplitude **/
   double fullScaleOutputValue();
 
-  PAController::PAController pa;
+  PAController pa;
 
 protected:
 
