@@ -121,6 +121,9 @@ SIPEngine::SIPEngine(const char* proxy, const char* IMSI)
 	mMyTag=tmp;	
 	// set our CSeq in case we need one
 	mCSeq = random()%600;
+
+	//to make sure noise doesn't magically equal a valid RTP port
+	mRTPPort = 0;
 }
 
 
@@ -197,7 +200,14 @@ void SIPEngine::saveCANCEL(const osip_message_t *CANCEL, bool mine)
 	osip_message_clone(CANCEL,&mCANCEL);
 }
 
-
+/* we're going to figure if the from field is us or not */
+bool SIPEngine::instigator()
+{
+	assert(mINVITE);
+	osip_uri_t * from_uri = mINVITE->from->url;
+	return (!strncmp(from_uri->username,mSIPUsername.c_str(),15) &&
+		!strncmp(from_uri->host, mSIPIP.c_str(), 30));
+}
 
 void SIPEngine::user( const char * IMSI )
 {
@@ -513,6 +523,7 @@ SIPState  SIPEngine::MOCWaitForOK()
 }
 
 
+//this isn't working right now -kurtis
 SIPState SIPEngine::MOCSendACK()
 {
 	assert(mLastResponse);
@@ -561,12 +572,26 @@ SIPState SIPEngine::MODSendBYE()
 	return mState;
 }
 
+SIPState SIPEngine::MODSendUnavail()
+{
+	LOG(INFO) << "user " << mSIPUsername << " state " << mState;
+	assert(mINVITE);
+
+	osip_message_t * unavail = sip_temporarily_unavailable(mINVITE, mSIPIP.c_str(),
+							       mSIPUsername.c_str(), mSIPPort);
+	gSIPInterface.write(&mProxyAddr,unavail);
+	osip_message_free(unavail);
+	mState = Canceled;
+	return mState;
+}
+
 SIPState SIPEngine::MODSendCANCEL()
 {
 	LOG(INFO) << "user " << mSIPUsername << " state " << mState;
 	assert(mINVITE);
 
-	osip_message_t * cancel = sip_cancel(mINVITE);
+	osip_message_t * cancel = sip_cancel(mINVITE, mSIPIP.c_str(),
+					     mSIPUsername.c_str(), mSIPPort);
 	gSIPInterface.write(&mProxyAddr,cancel);
 	saveCANCEL(cancel, true);
 	osip_message_free(cancel);
@@ -625,7 +650,7 @@ SIPState SIPEngine::MODWaitFor487()
 	}
 }
 
-SIPState SIPEngine::MODWaitForOK()
+SIPState SIPEngine::MODWaitForBYEOK()
 {
 	LOG(INFO) << "user " << mSIPUsername << " state " << mState;
 	bool responded = false;
@@ -638,34 +663,52 @@ SIPState SIPEngine::MODWaitForOK()
 			saveResponse(ok);
 			osip_message_free(ok);
 			if (code!=200) {
-				LOG(WARNING) << "unexpected " << code << " response to BYE/CANCEL, from proxy " << mProxyIP << ":" << mProxyPort << ". Assuming other end has cleared";
+				LOG(WARNING) << "unexpected " << code << " response to BYE, from proxy " << mProxyIP << ":" << mProxyPort << ". Assuming other end has cleared";
 			}
 			break;
 		}
 		catch (SIPTimeout& e) {
-			//this is sketchy -kurtis
-			if (mState==MODCanceling){
-			  	LOG(NOTICE) << "response timeout, resending CANCEL";
-				MODResendCANCEL();
-			} else {
-			  	LOG(NOTICE) << "response timeout, resending BYE";
-				MODResendBYE();
-			}
+			LOG(NOTICE) << "response timeout, resending BYE";
+			MODResendBYE();
 		}
 	}
 
 	if (!responded) { LOG(ALERT) << "lost contact with proxy " << mProxyIP << ":" << mProxyPort; }
 
-	//Canceled if we're canceling, otherwise clear
-	if (mState==MODCanceling){
-		mState = Canceled;
-	} else {
-		mState = Cleared;
-	}
+	mState = Cleared;
+
 	return mState;
 }
 
+SIPState SIPEngine::MODWaitForCANCELOK()
+{
+	LOG(INFO) << "user " << mSIPUsername << " state " << mState;
+	bool responded = false;
+	Timeval timeout(gConfig.getNum("SIP.Timer.F")); 
+	while (!timeout.passed()) {
+		try {
+			osip_message_t * ok = gSIPInterface.read(mCallID, gConfig.getNum("SIP.Timer.E"));
+			responded = true;
+			unsigned code = ok->status_code;
+			saveResponse(ok);
+			osip_message_free(ok);
+			if (code!=200) {
+				LOG(WARNING) << "unexpected " << code << " response to CANCEL, from proxy " << mProxyIP << ":" << mProxyPort << ". Assuming other end has cleared";
+			}
+			break;
+		}
+		catch (SIPTimeout& e) {
+			LOG(NOTICE) << "response timeout, resending CANCEL";
+			MODResendCANCEL();
+		}
+	}
 
+	if (!responded) { LOG(ALERT) << "lost contact with proxy " << mProxyIP << ":" << mProxyPort; }
+
+	mState = Canceled;
+
+	return mState;
+}
 
 SIPState SIPEngine::MTDCheckBYE()
 {
@@ -693,14 +736,25 @@ SIPState SIPEngine::MTDCheckBYE()
 	osip_message_t * msg = gSIPInterface.read(mCallID);
 	
 
-	if ((msg->sip_method!=NULL) && (strcmp(msg->sip_method,"BYE")==0)) { 
-		LOG(DEBUG) << "found msg="<<msg->sip_method;	
-		saveBYE(msg,false);
-		mState =  MTDClearing;
+	if (msg->sip_method) {
+		if (strcmp(msg->sip_method,"BYE")==0) { 
+			LOG(DEBUG) << "found msg="<<msg->sip_method;	
+			saveBYE(msg,false);
+			mState =  MTDClearing;
+		}
+		//repeated ACK, send OK
+		//pretty sure this never happens, but someone else left a fixme before... -kurtis
+		if (strcmp(msg->sip_method,"ACK")==0) { 	
+			LOG(DEBUG) << "Not responding to repeated ACK. FIXME";
+		}
 	}
 
-	// FIXME -- Check for repeated ACK and send OK if needed.
-	// FIXME -- Check for repeated OK and send ACK if needed.
+	//repeated OK, send ack
+	//MOC because that's the only time we ACK
+	if (msg->status_code==200){
+		LOG(DEBUG) << "Repeated OK, resending ACK";
+		MOCSendACK();
+	}
 
 	osip_message_free(msg);
 	return mState;

@@ -420,6 +420,14 @@ SIP::SIPState TransactionEntry::MODSendBYE()
 	return state;
 }
 
+SIP::SIPState TransactionEntry::MODSendUnavail()
+{
+	ScopedLock lock(mLock);
+	SIP::SIPState state = mSIP.MODSendUnavail();
+	echoSIPState(state);
+	return state;
+}
+
 SIP::SIPState TransactionEntry::MODSendCANCEL()
 {
 	ScopedLock lock(mLock);
@@ -444,10 +452,18 @@ SIP::SIPState TransactionEntry::MODResendCANCEL()
 	return state;
 }
 
-SIP::SIPState TransactionEntry::MODWaitForOK()
+SIP::SIPState TransactionEntry::MODWaitForBYEOK()
 {
 	ScopedLock lock(mLock);
-	SIP::SIPState state = mSIP.MODWaitForOK();
+	SIP::SIPState state = mSIP.MODWaitForBYEOK();
+	echoSIPState(state);
+	return state;
+}
+
+SIP::SIPState TransactionEntry::MODWaitForCANCELOK()
+{
+	ScopedLock lock(mLock);
+	SIP::SIPState state = mSIP.MODWaitForCANCELOK();
 	echoSIPState(state);
 	return state;
 }
@@ -805,5 +821,19 @@ TransactionEntry* TransactionTable::findLongestCall()
 
 
 
+/* linear, we should move the actual search into this structure */
+bool TransactionTable::RTPAvailable(short rtpPort)
+{
+	ScopedLock lock(mLock);
+	clearDeadEntries();
+	bool avail = true;
+ 	for (TransactionMap::iterator itr = mTable.begin(); itr!=mTable.end(); ++itr) {
+		if (itr->second->mSIP.RTPPort() == rtpPort){
+			avail = false;
+			break;
+		}
+	}
+	return avail;
+}
 
 // vim: ts=4 sw=4

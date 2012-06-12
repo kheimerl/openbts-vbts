@@ -142,7 +142,7 @@ public:
   /** get transport bus type of attached device */ 
   enum RadioDevice::busType getBus() { return mRadio->getBus(); }
 
-  PAController::PAController pa;
+  PAController pa;
 
 protected:
 

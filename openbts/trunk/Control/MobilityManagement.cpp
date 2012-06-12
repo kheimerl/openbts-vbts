@@ -201,26 +201,25 @@ void Control::LocationUpdatingController(const L3LocationUpdatingRequest* lur, L
 			throw UnexpectedMessage();
 		}
 		LOG(INFO) << *resp;
-		const char* new_imei = resp->mobileID().digits();
-		if (!gTMSITable.IMEI(IMSI,new_imei)){
+		string new_imei = resp->mobileID().digits();
+		if (!gTMSITable.IMEI(IMSI,new_imei.c_str())){
 			LOG(WARNING) << "failed access to TMSITable";
 		} 
 
 		//query subscriber registry for old imei, update if neccessary
 		string name = string("IMSI") + IMSI;
-		char* old_imei = gSubscriberRegistry.sqlQuery("hardware", "sip_buddies", "name", name.c_str());
+		string old_imei = gSubscriberRegistry.imsiGet(name, "hardware");
 		
 		//if we have a new imei and either there's no old one, or it is different...
-		if (new_imei && (!old_imei || strncmp(old_imei,new_imei, 15) != 0)){
-			ostringstream os2;
-			os2 << "update sip_buddies set RRLPSupported = \"1\", hardware = \"" << new_imei << "\" where name = \"IMSI" << IMSI << "\"";
+		if (!new_imei.empty() && (old_imei.empty() || old_imei != new_imei)){
 			LOG(INFO) << "Updating IMSI" << IMSI << " to IMEI:" << new_imei;
-			if (!gSubscriberRegistry.sqlUpdate(os2.str().c_str())) {
-				LOG(INFO) << "SR update problem";
+			if (!gSubscriberRegistry.imsiSet(name,"RRLPSupported", "1")) {
+			 	LOG(INFO) << "SR RRLPSupported update problem";
+			}
+			if (!gSubscriberRegistry.imsiSet(name,"hardware", new_imei)) {
+				LOG(INFO) << "SR hardware update problem";
 			}
 		}
-		if (old_imei)
-			free(old_imei);
 		delete msg;
 	}
 
@@ -241,13 +240,6 @@ void Control::LocationUpdatingController(const L3LocationUpdatingRequest* lur, L
 		if (!gTMSITable.classmark(IMSI,classmark))
 			LOG(WARNING) << "failed access to TMSITable";
 		delete msg;
-	}
-
-	if (gConfig.defines("Control.LUR.QueryRRLP")) {
-		// Query for RRLP
-		if (!sendRRLP(mobileID, DCCH)) {
-			LOG(INFO) << "RRLP request failed";
-		}
 	}
 
 	// We fail closed unless we're configured otherwise
@@ -293,6 +285,13 @@ void Control::LocationUpdatingController(const L3LocationUpdatingRequest* lur, L
 			LOG(INFO) << *resp;
 		}
 		delete resp;
+	}
+
+	if (gConfig.defines("Control.LUR.QueryRRLP")) {
+		// Query for RRLP
+		if (!sendRRLP(mobileID, DCCH)) {
+			LOG(INFO) << "RRLP request failed";
+		}
 	}
 
 	// If this is an IMSI attach, send a welcome message.

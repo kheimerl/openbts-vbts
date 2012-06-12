@@ -151,10 +151,16 @@ public:
 	/** Return the current SIP call state. */
 	SIPState state() const { return mState; }
 
+	/** Return the RTP Port being used. */
+	short RTPPort() const { return mRTPPort; }
+
 	/** Return if the call has successfully finished */
 	bool finished() const { return (mState==Cleared || mState==Canceled); }
 
-
+	/** Return if the communication was started by us (true) or not (false) */
+	/* requires an mINVITE be established */
+	bool instigator();
+	
 	/** Set the user to IMSI<IMSI> and generate a call ID; for mobile-originated transactions. */
 	void user( const char * IMSI );
 
@@ -271,13 +277,17 @@ public:
 	//@{
 	SIPState MODSendBYE();
 
+	SIPState MODSendUnavail();
+
 	SIPState MODSendCANCEL();
 
 	SIPState MODResendBYE();
 
 	SIPState MODResendCANCEL();
 
-	SIPState MODWaitForOK();
+	SIPState MODWaitForBYEOK();
+
+	SIPState MODWaitForCANCELOK();
 
 	SIPState MODWaitFor487();
 	//@}
