@@ -32,6 +32,7 @@ libcommon_la_SOURCES = \
 	Threads.cpp \
 	Timeval.cpp \
 	Logger.cpp \
+	PARPCClient.cpp \
 	URLEncode.cpp \
 	Configuration.cpp \
 	sqlite3util.cpp
@@ -59,8 +60,8 @@ noinst_HEADERS = \
 	URLEncode.h \
 	Configuration.h \
 	F16.h \
-	Logger.h \
-	sqlite3util.h
+	PARPCClient.h \
+	Logger.h
 
 BitVectorTest_SOURCES = BitVectorTest.cpp
 BitVectorTest_LDADD = libcommon.la
