@@ -29,8 +29,15 @@
 
 
 #include <stdio.h>
+#include <time.h>
 #include "Transceiver.h"
 #include <Logger.h>
+
+#ifdef USE_UHD
+#define OVERTHRESH 3000.0
+#else
+#define OVERTHRESH 20.0
+#endif
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -103,6 +110,7 @@ Transceiver::Transceiver(int wBasePort,
   mPower = -10;
   mEnergyThreshold = 5.0; // based on empirical data
   prevFalseDetectionTime = startTime;
+  LOG(ALERT) << "Kurtis BTS Transceiver now running";
 }
 
 Transceiver::~Transceiver()
@@ -308,6 +316,13 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
   complex amplitude = 0.0;
   float TOA = 0.0;
   float avgPwr = 0.0;
+
+  //kurtis shit
+  if (energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold + OVERTHRESH,&avgPwr)) {
+    //LOG(ALERT) << "Updating:" << sqrt(avgPwr) - mEnergyThreshold;
+    mRadioInterface->pa.on();
+  }
+
   if (!energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold,&avgPwr)) {
      LOG(DEBUG) << "Estimated Energy: " << sqrt(avgPwr) << ", at time " << rxBurst->getTime();
      double framesElapsed = rxBurst->getTime()-prevFalseDetectionTime;

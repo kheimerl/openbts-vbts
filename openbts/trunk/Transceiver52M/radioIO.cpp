@@ -79,13 +79,16 @@ void RadioInterface::pushBuffer()
 
 	float_to_short(tx_buf, sendBuffer, sendCursor);
 
-	/* Write samples. Fail if we don't get what we want. */
-	int num_smpls = mRadio->writeSamples(tx_buf,
-					     sendCursor,
-					     &underrun,
-					     writeTimestamp);
-	assert(num_smpls == sendCursor);
+	if (pa.state()){
+	  /* Write samples. Fail if we don't get what we want. */
+	  int num_smpls = mRadio->writeSamples(tx_buf,
+					       sendCursor,
+					       &underrun,
+					       writeTimestamp);
+	  assert(num_smpls == sendCursor);
+	}
 
-	writeTimestamp += (TIMESTAMP) num_smpls;
+	//writeTimestamp += (TIMESTAMP) num_smpls;
+	writeTimestamp += (TIMESTAMP) sendCursor;
 	sendCursor = 0;
 }
