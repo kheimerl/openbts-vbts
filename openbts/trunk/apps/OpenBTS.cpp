@@ -50,6 +50,7 @@ ConfigurationTable gConfig("/etc/OpenBTS/OpenBTS.db");
 #include <Configuration.h>
 #include <PhysicalStatus.h>
 #include <SubscriberRegistry.h>
+#include <PARPCClient.h>
 
 #include <sys/wait.h>
 
@@ -90,6 +91,8 @@ TransceiverManager gTRX(gConfig.getNum("GSM.Radio.ARFCNs"), gConfig.getStr("TRX.
 // Subscriber registry
 SubscriberRegistry gSubscriberRegistry;
 
+//kurtis
+PARPCClient gRPCClient;
 
 /** Define a function to call any time the configuration database changes. */
 void purgeConfig(void*,int,char const*, char const*, sqlite3_int64)
