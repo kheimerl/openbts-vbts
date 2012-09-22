@@ -32,6 +32,7 @@ libcommon_la_SOURCES = \
 	Threads.cpp \
 	Timeval.cpp \
 	Logger.cpp \
+	PARPCClient.cpp \
 	URLEncode.cpp \
 	Configuration.cpp
 
@@ -58,6 +59,7 @@ noinst_HEADERS = \
 	URLEncode.h \
 	Configuration.h \
 	F16.h \
+	PARPCClient.h \
 	Logger.h
 
 BitVectorTest_SOURCES = BitVectorTest.cpp
