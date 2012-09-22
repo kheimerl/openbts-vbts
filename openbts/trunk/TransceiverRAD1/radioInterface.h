@@ -28,6 +28,7 @@
 #include "GSMCommon.h"
 #include "LinkedLists.h"
 #include "radioDevice.h"
+#include "PAController.h"
 
 /** samples per GSM symbol */
 #define SAMPSPERSYM 1 
@@ -244,6 +245,8 @@ public:
   /** returns the full-scale receive amplitude **/
   double fullScaleOutputValue();
 
+  //kurtis
+  PAController pa;
 
 protected:
 
