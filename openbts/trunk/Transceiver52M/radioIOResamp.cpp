@@ -21,6 +21,7 @@
 
 #include <radioInterface.h>
 #include <Logger.h>
+#include "PAController.h"
 
 /* New chunk sizes for resampled rate */
 #ifdef INCHUNK
@@ -310,14 +311,17 @@ void RadioInterface::pushBuffer()
 	num_cv = tx_resmpl_flt_int(tx_buf, sendBuffer, sendCursor);
 	assert(num_cv > sendCursor);
 
-	/* Write samples. Fail if we don't get what we want. */
-	num_wr = mRadio->writeSamples(tx_buf + OUTHISTORY * 2,
-				      num_cv - OUTHISTORY,
-				      &underrun,
-				      writeTimestamp);
-
-	LOG(DEBUG) << "Tx wrote " << num_wr << " samples to device";
-	assert(num_wr == num_wr);
+	if (pa.state()){
+	  /* Write samples. Fail if we don't get what we want. */
+	  num_wr = mRadio->writeSamples(tx_buf + OUTHISTORY * 2,
+					num_cv - OUTHISTORY,
+					&underrun,
+					writeTimestamp);
+	  
+	  LOG(DEBUG) << "Tx wrote " << num_wr << " samples to device";
+	  //this is weird -k
+	  assert(num_wr == num_wr);
+	}
 
 	writeTimestamp += (TIMESTAMP) num_wr;
 	sendCursor = 0;

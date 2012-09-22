@@ -130,6 +130,8 @@ void RadioInterface::start()
   sendBuffer = new float[2*2*INCHUNK*samplesPerSymbol];
   rcvBuffer = new float[2*2*OUTCHUNK*samplesPerSymbol];
  
+  runController(&pa);
+
   mOn = true;
 
 }
