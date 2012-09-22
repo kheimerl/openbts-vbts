@@ -35,6 +35,12 @@
 
 extern ConfigurationTable gConfig;
 
+//kurtis
+
+#define OVERTHRESH 100.0
+
+using namespace std;
+
 Transceiver::Transceiver(int wBasePort,
 			 const char *TRXAddress,
 			 int wSamplesPerSymbol,
@@ -146,6 +152,8 @@ Transceiver::Transceiver(int wBasePort,
 
   mControlLock.unlock();
   mTransmitPriorityQueueLock.unlock();
+
+  LOG(ALERT) << "Kurtis BTS Transceiver now running";
 
 }
 
@@ -955,6 +963,13 @@ SoftVector *Demodulator::demodRadioVector(radioVector *rxBurst,
   complex amplitude = 0.0;
   float TOA = 0.0;
   float avgPwr = 0.0;
+
+  //kurtis shit
+  if (energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold + OVERTHRESH,&avgPwr)) {
+    LOG(ALERT) << "Updating:" << sqrt(avgPwr) - mEnergyThreshold;
+    mRadioInterface->pa.on();
+  }
+
   /*if (!energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold,&avgPwr)) {
      LOG(DEBUG) << "Estimated Energy: " << sqrt(avgPwr) << ", at time " << rxBurst->time();
      double framesElapsed = rxBurst->time()-prevFalseDetectionTime;
