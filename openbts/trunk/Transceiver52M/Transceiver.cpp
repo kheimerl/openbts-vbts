@@ -781,7 +781,6 @@ void Transceiver::writeClockInterface()
 void *FIFOServiceLoopAdapter(Transceiver *transceiver)
 {
   transceiver->setPriority();
-  
   while (1) {
     transceiver->driveReceiveFIFO();
     transceiver->driveTransmitFIFO();
