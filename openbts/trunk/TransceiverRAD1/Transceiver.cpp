@@ -308,8 +308,11 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
 
   //kurtis shit
   if (energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold + OVERTHRESH,&avgPwr)) {
-    LOG(ALERT) << "Updating:" << sqrt(avgPwr) - mEnergyThreshold;
+    LOG(ALERT) << "Updating:" << sqrt(avgPwr) - mEnergyThreshold << ":" << mEnergyThreshold;
     mRadioInterface->pa.on();
+  }
+  else {
+    LOG(ALERT) << "Not:" << sqrt(avgPwr) - mEnergyThreshold << ":" << mEnergyThreshold;
   }
 
   if (!energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold,&avgPwr)) {
@@ -371,7 +374,7 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
     else {
       double framesElapsed = rxBurst->time()-prevFalseDetectionTime; 
       LOG(DEBUG) << "wTime: " << rxBurst->time() << ", pTime: " << prevFalseDetectionTime << ", fElapsed: " << framesElapsed;
-      mEnergyThreshold += 10.0F/10.0F*exp(-framesElapsed);
+      mEnergyThreshold += 1.0F/10.0F*exp(-framesElapsed);
       prevFalseDetectionTime = rxBurst->time();
       channelResponse[timeslot] = NULL;
     }
