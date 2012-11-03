@@ -54,12 +54,17 @@ using namespace std;
 //I hate C++ -kurtis
 
 //should make these configurable later
+#define SERIAL_LOC "/dev/ttyACM0"
 #define ON_CMD "O0=1\r"
 #define OFF_CMD "O0=0\r"
 
 static bool pa_on = false;
 static Mutex pa_lock;
 static time_t last_update = NULL;
+#ifndef DONT_USE_SERIAL
+static int fd1 = open (SERIAL_LOC, O_RDWR | O_NOCTTY | O_NDELAY);
+#endif
+
 //hack for now, as I want one source file for both RAD1 and UHD/USRP1
 
 /* assumes you hold the lock */
@@ -98,8 +103,9 @@ bool update_pa(){
   int pa_timeout = gConfig.getNum("VBTS.PA.Timeout", 5 * 60);
   ScopedLock lock (pa_lock);
   if (pa_on && last_update && 
-      time(NULL) > pa_timeout + last_update){
+    time(NULL) > pa_timeout + last_update){
     actual_pa_off();
+    LOG(ALERT) << "Timeout:" << pa_timeout;
   }
   return pa_on;
 }
@@ -150,11 +156,6 @@ public:
 
 PAController::PAController()
 {
-
-#ifndef DONT_USE_SERIAL
-  string serial_loc = gConfig.getStr("VBTS.PA.SerialLoc", "/dev/ttyACM0");
-  fd1 = open (SERIAL_LOC, O_RDWR | O_NOCTTY | O_NDELAY);
-#endif
 
   registry = new xmlrpc_c::registry();
 

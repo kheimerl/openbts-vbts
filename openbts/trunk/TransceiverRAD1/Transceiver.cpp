@@ -967,7 +967,7 @@ SoftVector *Demodulator::demodRadioVector(radioVector *rxBurst,
 
   //kurtis shit
   if (energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold + overthresh,&avgPwr)) {
-    LOG(ALERT) << "Updating:" << sqrt(avgPwr) - mEnergyThreshold;
+    //LOG(ALERT) << "Updating:" << sqrt(avgPwr) - mEnergyThreshold;
     mRadioInterface->pa.on();
   }
 
