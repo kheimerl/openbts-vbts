@@ -39,6 +39,7 @@
 #include <Logger.h>
 #include <fcntl.h>
 #include <string.h>
+#include <Configuration.h>
 #include "PAController.h"
 #include "config.h"
 
@@ -46,25 +47,20 @@
 #define DONT_USE_SERIAL 1
 #endif
 
+extern ConfigurationTable gConfig;
+
 using namespace std;
 
 //I hate C++ -kurtis
 
-#define RPC_PORT 8080
-#define RPC_LOG_LOC "/tmp/xmlrpc.log"
-#define PA_TIMEOUT 5 * 60
-#define SERIAL_LOC "/dev/ttyACM0"
+//should make these configurable later
 #define ON_CMD "O0=1\r"
 #define OFF_CMD "O0=0\r"
-//#define PA_TIMEOUT 5
 
 static bool pa_on = false;
 static Mutex pa_lock;
 static time_t last_update = NULL;
 //hack for now, as I want one source file for both RAD1 and UHD/USRP1
-#ifndef DONT_USE_SERIAL
-int fd1 = open (SERIAL_LOC, O_RDWR | O_NOCTTY | O_NDELAY);
-#endif
 
 /* assumes you hold the lock */
 static void actual_pa_off(){
@@ -99,9 +95,10 @@ static void turn_pa_off(){
    by the transceiver, allowing it to be updated
    almost immediately after time stamp ends */
 bool update_pa(){
+  int pa_timeout = gConfig.getNum("VBTS.PA.Timeout", 5 * 60);
   ScopedLock lock (pa_lock);
   if (pa_on && last_update && 
-      time(NULL) > PA_TIMEOUT + last_update){
+      time(NULL) > pa_timeout + last_update){
     actual_pa_off();
   }
   return pa_on;
@@ -153,6 +150,12 @@ public:
 
 PAController::PAController()
 {
+
+#ifndef DONT_USE_SERIAL
+  string serial_loc = gConfig.getStr("VBTS.PA.SerialLoc", "/dev/ttyACM0");
+  fd1 = open (SERIAL_LOC, O_RDWR | O_NOCTTY | O_NDELAY);
+#endif
+
   registry = new xmlrpc_c::registry();
 
   xmlrpc_c::methodPtr const onMethod(new on_method);
@@ -163,9 +166,12 @@ PAController::PAController()
   registry->addMethod("off", offMethod);
   registry->addMethod("status", statusMethod);
 
+  long rpc_port = gConfig.getNum("VBTS.PA.RPCPort", 8080);
+  string rpc_log = gConfig.getStr("VBTS.PA.RPCLogLoc", "/tmp/xmlrpc.log");
+
   RPCServer = new xmlrpc_c::serverAbyss(*registry,
-					RPC_PORT,
-					RPC_LOG_LOC
+					rpc_port,
+					rpc_log
 					);
 }
 

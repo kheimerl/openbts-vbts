@@ -123,4 +123,9 @@ INSERT INTO "CONFIG" VALUES('TRX.IP','127.0.0.1',1,0,'IP address of the transcei
 INSERT INTO "CONFIG" VALUES('TRX.Port','5700',1,0,'IP port of the transceiver application.  Static.');
 INSERT INTO "CONFIG" VALUES('TRX.RadioFrequencyOffset','128',1,0,'Fine-tuning adjustment for the transceiver master clock.  Roughly 170 Hz/step.  Set at the factory.  Do not adjust without proper calibration.  Static.');
 INSERT INTO "CONFIG" VALUES('TRX.TxAttenOffset','2',1,0,'Hardware-specific gain adjustment for transmitter, matched to the power amplifier, expessed as an attenuationi in dB.  Set at the factory.  Do not adjust without proper calibration.  Static.');
+INSERT INTO "CONFIG" VALUES('VBTS.PA.Timeout','300',1,0,'The amount of time without any communications required for VBTS to power down the PA');
+INSERT INTO "CONFIG" VALUES('VBTS.PA.SerialLoc','/dev/ttyACM0',1,0,'The location of the Serial Line controlling the PA. Static.');
+INSERT INTO "CONFIG" VALUES('VBTS.PA.RPCPort','8080',1,0,'The port the RPC server listens on. Static.');
+INSERT INTO "CONFIG" VALUES('VBTS.PA.RPCLogLoc','/tmp/xmlrpc.log',1,0,'The Location of the RPC logs. Static.');
+INSERT INTO "CONFIG" VALUES('VBTS.Transceiver.Overthresh','100',1,0,'The power (over the noise floor) required to wake VBTS');
 COMMIT;

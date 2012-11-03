@@ -40,6 +40,7 @@
 #include <xmlrpc-c/base.hpp>
 #include <xmlrpc-c/registry.hpp>
 #include <xmlrpc-c/server_abyss.hpp>
+#include <string.h>
 
 bool update_pa();
 
@@ -57,6 +58,7 @@ class PAController
  private:
   xmlrpc_c::registry* registry;
   xmlrpc_c::serverAbyss* RPCServer;
+  int fd1;
   
 };
 
