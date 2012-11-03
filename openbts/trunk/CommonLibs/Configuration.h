@@ -69,6 +69,7 @@ class ConfigurationRecord {
 
 	std::string mValue;
 	long mNumber;
+	double mFloat;
 	bool mDefined;
 
 	public:
@@ -80,18 +81,21 @@ class ConfigurationRecord {
 	ConfigurationRecord(const std::string& wValue):
 		mValue(wValue),
 		mNumber(strtol(wValue.c_str(),NULL,0)),
+		mFloat(strtod(wValue.c_str(),NULL)),
 		mDefined(true)
 	{ }
 
 	ConfigurationRecord(const char* wValue):
 		mValue(std::string(wValue)),
 		mNumber(strtol(wValue,NULL,0)),
+		mFloat(strtod(wValue,NULL)),
 		mDefined(true)
 	{ }
 
 
 	const std::string& value() const { return mValue; }
 	long number() const { return mNumber; }
+	double flo() const { return mFloat; }
 	bool defined() const { return mDefined; }
 
 };
@@ -216,6 +220,18 @@ class ConfigurationTable {
 		Define the parameter to the default value if not found.
 	*/
 	long getNum(const std::string& key, long defaultValue);
+
+	/**
+		Get a numeric parameter from the table.
+		Throw ConfigurationTableKeyNotFound if not found.
+	*/
+	double getFloat(const std::string& key);
+
+	/**
+		Get a numeric parameter from the table.
+		Define the parameter to the default value if not found.
+	*/
+	double getFloat(const std::string& key, double defaultValue);
 
 	/**
 		Get a numeric vector from the table.

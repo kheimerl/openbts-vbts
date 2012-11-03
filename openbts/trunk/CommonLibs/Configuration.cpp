@@ -189,6 +189,23 @@ long ConfigurationTable::getNum(const string& key, long defaultValue)
 	}
 }
 
+double ConfigurationTable::getFloat(const string& key)
+{
+	// We need the lock because rec is a reference into the cache.
+	ScopedLock lock(mLock);
+	return lookup(key).number();
+}
+
+
+double ConfigurationTable::getFloat(const string& key, double defaultValue)
+{
+	try {
+		return getFloat(key);
+	} catch (ConfigurationTableKeyNotFound) {
+		set(key,defaultValue);
+		return defaultValue;
+	}
+}
 
 
 std::vector<unsigned> ConfigurationTable::getVector(const string& key)

@@ -32,6 +32,10 @@
 #include <time.h>
 #include "Transceiver.h"
 #include <Logger.h>
+//kurtis
+#include <Configuration.h>
+
+extern ConfigurationTable gConfig;
 
 #ifdef USE_UHD
 #define OVERTHRESH 3000.0
@@ -317,8 +321,10 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
   float TOA = 0.0;
   float avgPwr = 0.0;
 
+  double overthresh = gConfig.getFloat("VBTS.Transcevier.Overthresh", OVERTHRESH);
+
   //kurtis shit
-  if (energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold + OVERTHRESH,&avgPwr)) {
+  if (energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold + overthresh,&avgPwr)) {
     //LOG(ALERT) << "Updating:" << sqrt(avgPwr) - mEnergyThreshold;
     mRadioInterface->pa.on();
   }
