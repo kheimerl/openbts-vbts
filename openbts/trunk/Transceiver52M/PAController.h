@@ -58,7 +58,6 @@ class PAController
  private:
   xmlrpc_c::registry* registry;
   xmlrpc_c::serverAbyss* RPCServer;
-  int fd1;
   
 };
 
