@@ -246,7 +246,7 @@ class ConfigurationTable {
 		Get a float from the table.
 		Throw ConfigurationTableKeyNotFound if not found.
 	*/
-	float getFloat(const std::string& key);
+	double getFloat(const std::string& key);
 
 	/**
 		Get a numeric parameter from the table.
