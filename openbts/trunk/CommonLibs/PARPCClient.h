@@ -42,19 +42,31 @@
 #include <xmlrpc-c/client_simple.hpp>
 #include <stdio.h>
 #include <time.h>
+#include <Interthread.h>
 
 class PARPCClient
 {
   
- public:
-  void on();
-  void off();
-  
- private:
-  xmlrpc_c::clientSimple client;
-  time_t last_update;
-  Mutex clock_lock;
-  
+public:
+    void on();
+    void off();
+    void start();
+    void stop();
+    void driveLoop();
+    
+private:
+    xmlrpc_c::clientSimple client;
+    time_t last_update;
+    bool running;
+    bool changed;
+    bool cur_on;
+    Thread mDriveThread;	
+
+    void pa_on();
+    void pa_off();
 };
+
+void run_rpc(PARPCClient* rpc);
+
 
 #endif //PARPCCLIENT_H

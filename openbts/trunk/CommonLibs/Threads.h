@@ -168,6 +168,8 @@ class Thread {
 	/** Join a thread that will stop on its own. */
 	void join() { int s = pthread_join(mThread,NULL); assert(!s); }
 
+	void yield() { int s = pthread_yield(); assert(!s); }
+
 };
 
 
