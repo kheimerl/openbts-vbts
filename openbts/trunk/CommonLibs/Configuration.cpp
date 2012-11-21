@@ -246,7 +246,6 @@ double ConfigurationTable::getFloat(const string& key, double defaultValue)
 		return defaultValue;
 	}
 }
-<<<<<<< HEAD
 
 std::vector<string> ConfigurationTable::getVectorOfStrings(const string& key)
 {
@@ -287,10 +286,6 @@ std::vector<string> ConfigurationTable::getVectorOfStrings(const string& key, co
 		return getVectorOfStrings(key);
 	}
 }
-
-=======
->>>>>>> 04cabb08b0a3b24717ecf962983176f2c2cf7e70
-
 
 std::vector<unsigned> ConfigurationTable::getVector(const string& key)
 {
