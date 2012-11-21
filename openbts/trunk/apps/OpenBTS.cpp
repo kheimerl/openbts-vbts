@@ -165,8 +165,7 @@ int main(int argc, char *argv[])
 
 	// Start the SIP interface.
 	gSIPInterface.start();
-
-
+	
 	//
 	// Configure the radio.
 	//
@@ -317,6 +316,8 @@ int main(int argc, char *argv[])
 	// OK, now it is safe to start the BTS.
 	gBTS.start();
 
+	// Start the RPC Client -kurtis
+	gRPCClient.start();
 
 	cout << "\nsystem ready\n";
 	cout << "\nuse the OpenBTSCLI utility to access CLI\n";
@@ -333,7 +334,6 @@ int main(int argc, char *argv[])
 		perror("binding name to cmd datagram socket");
 		exit(1);
 	}
-
 	while (1) {
 		char cmdbuf[1000];
 		struct sockaddr_un source;

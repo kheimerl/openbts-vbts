@@ -36,7 +36,7 @@
 
 #include <Logger.h>
 #include <fcntl.h>
-#include <string.h>
+#include <unistd.h>
 #include "PARPCClient.h"
 #include "config.h"
 
@@ -48,19 +48,70 @@ using namespace std;
 
 #define WAIT_TIME 30
 
+void run_rpc(PARPCClient* rpc){
+    rpc->driveLoop();
+}
+
+/*public*/
+void PARPCClient::driveLoop()
+{
+    while (running){
+	if (changed){
+	    if (cur_on){
+		pa_on();
+	    }
+	    else{
+		pa_off();
+	    }
+	    changed = false;
+	}
+	else {
+	    //yield
+	    mDriveThread.yield();
+	}
+    }
+}
+
+void PARPCClient::start(){
+    running = true;
+    mDriveThread.start((void *(*)(void*))run_rpc,this);
+    pa_on();
+}
+
+void PARPCClient::stop()
+{
+    running = false;
+}
+
+/* we don't need to lock on these
+   as there's just one thread reading them */
 void PARPCClient::on()
 {
-  ScopedLock lock(clock_lock);
-  if (time(NULL) > last_update + WAIT_TIME){
-    xmlrpc_c::value result;
-    client.call(SERVER_LOC, ON_METHOD, "", &result);
-    last_update = time(NULL);
-  }
+    cur_on = true;
+    changed = true;
 }
 
 void PARPCClient::off()
 {
-  ScopedLock lock(clock_lock);
-  xmlrpc_c::value result;
-  client.call(SERVER_LOC, OFF_METHOD, "", &result);
+    cur_on = false;
+    changed = true;
+}
+
+
+/*private*/
+/* we dont need to lock any of these, as only one thread is handling
+   any of the changes to time */
+void PARPCClient::pa_on(){
+    LOG(INFO) << "PA On from client";
+    if (time(NULL) > last_update + WAIT_TIME){
+	xmlrpc_c::value result;
+	client.call(SERVER_LOC, ON_METHOD, "", &result);
+	last_update = time(NULL);
+    }
+}
+
+void PARPCClient::pa_off(){
+    LOG(INFO) << "PA Off from client";
+    xmlrpc_c::value result;
+    client.call(SERVER_LOC, OFF_METHOD, "", &result);
 }

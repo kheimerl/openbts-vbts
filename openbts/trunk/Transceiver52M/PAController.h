@@ -47,18 +47,17 @@ bool update_pa();
 class PAController
 {
   
- public:
-  PAController();
-  ~PAController();
-  void run();
-  void on();
-  void off();
-  bool state();
-  
- private:
-  xmlrpc_c::registry* registry;
-  xmlrpc_c::serverAbyss* RPCServer;
-  
+public:
+    PAController();
+    ~PAController();
+    void run();
+    void on();
+    void off();
+    bool state();
+    
+private:
+    xmlrpc_c::registry* registry;
+    xmlrpc_c::serverAbyss* RPCServer;
 };
 
 void runController(PAController* cont);
