@@ -356,6 +356,14 @@ bool callManagementDispatchGSM(TransactionEntry *transaction, GSM::LogicalChanne
 				//if we cancel the call, Switch might send 487 Request Terminated
 				//listen for that
 				transaction->MODWaitFor487();
+				// TODO: Asterisk fires off two SIP packets, OK and 487. We may not receive them
+				//       in that order. We will want to use the code below to eat both of the
+				//       packets, but accept them in any order.
+				/*vector<unsigned> valid(2);
+				valid.push_back(200);
+				valid.push_back(487);
+				transaction->MODWaitForResponse(&valid);
+				transaction->MODWaitForResponse(&valid);*/
 			}
 			else { //if we received it, send a 4** instead
                                //transaction->MODSendERROR(NULL, 480, "Temporarily Unavailable", true);
@@ -906,7 +914,7 @@ void Control::MOCController(TransactionEntry *transaction, GSM::TCHFACCHLogicalC
 		if (transaction->clearingGSM()) return abortAndRemoveCall(transaction,TCH,GSM::L3Cause(0x7F));
 
 		LOG(INFO) << "wait for Ringing or OK";
-		SIP::SIPState state = transaction->MOCWaitForOK();
+		SIP::SIPState state = transaction->MOCCheckForOK();
 		LOG(DEBUG) << "SIP state="<<state;
 		switch (state) {
 			case SIP::Busy:
@@ -950,7 +958,7 @@ void Control::MOCController(TransactionEntry *transaction, GSM::TCHFACCHLogicalC
 	while (state!=SIP::Active) {
 
 		LOG(DEBUG) << "wait for SIP session start";
-		state = transaction->MOCWaitForOK();
+		state = transaction->MOCCheckForOK();
 		LOG(DEBUG) << "SIP state "<< state;
 
 		// check GSM state
@@ -1154,7 +1162,7 @@ void Control::MTCController(TransactionEntry *transaction, GSM::TCHFACCHLogicalC
 	while (state!=SIP::Active) {
 		LOG(DEBUG) << "wait for SIP OKAY-ACK";
 		if (updateGSMSignalling(transaction,TCH)) return abortAndRemoveCall(transaction,TCH,GSM::L3Cause(0x15));
-		state = transaction->MTCWaitForACK();
+		state = transaction->MTCCheckForACK();
 		LOG(DEBUG) << "SIP call state "<< state;
 		switch (state) {
 			case SIP::Active:

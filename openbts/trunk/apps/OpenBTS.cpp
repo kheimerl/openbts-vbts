@@ -1,7 +1,7 @@
 /*
 * Copyright 2008, 2009, 2010 Free Software Foundation, Inc.
 * Copyright 2010 Kestrel Signal Processing, Inc.
-* Copyright 2011 Range Networks, Inc.
+* Copyright 2011,2012 Range Networks, Inc.
 *
 * This software is distributed under the terms of the GNU Affero Public License.
 * See the COPYING file in the main directory for details.
@@ -110,6 +110,9 @@ pid_t gTransceiverPid = 0;
 
 void startTransceiver()
 {
+	// kill any stray transceiver process
+	system("killall transceiver");
+
 	// Start the transceiver binary, if the path is defined.
 	// If the path is not defined, the transceiver must be started by some other process.
 	char TRXnumARFCN[4];
@@ -135,6 +138,17 @@ void startTransceiver()
 
 int main(int argc, char *argv[])
 {
+	// TODO: Properly parse and handle any arguments
+	if (argc > 1) {
+		for (int argi = 0; argi < argc; argi++) {
+			if (!strcmp(argv[argi], "--version") ||
+			    !strcmp(argv[argi], "-v")) {
+				cout << gVersionString << endl;
+			}
+		}
+
+		return 0;
+	}
 
 	int sock = socket(AF_UNIX,SOCK_DGRAM,0);
 	if (sock<0) {
@@ -152,7 +166,7 @@ int main(int argc, char *argv[])
 
 	COUT("\n\n" << gOpenBTSWelcome << "\n");
 	gTMSITable.open(gConfig.getStr("Control.Reporting.TMSITable").c_str());
-	gTransactionTable.init();
+	gTransactionTable.init(gConfig.getStr("Control.Reporting.TransactionTable").c_str());
 	gPhysStatus.open(gConfig.getStr("Control.Reporting.PhysStatusTable").c_str());
 	gBTS.init();
 	gSubscriberRegistry.init();
@@ -160,8 +174,22 @@ int main(int argc, char *argv[])
 
 	COUT("\nStarting the system...");
 
+	// is the radio running?
+	// Start the transceiver interface.
+	LOG(INFO) << "checking transceiver";
+	//gTRX.ARFCN(0)->powerOn();
+	//sleep(gConfig.getNum("TRX.Timeout.Start",2));
+	bool haveTRX = gTRX.ARFCN(0)->powerOn();
+
 	Thread transceiverThread;
-	transceiverThread.start((void*(*)(void*)) startTransceiver, NULL);
+	if (!haveTRX) {
+		transceiverThread.start((void*(*)(void*)) startTransceiver, NULL);
+		// sleep to let the FPGA code load
+		// TODO: we should be "pinging" the radio instead of sleeping
+		sleep(5);
+	} else {
+		LOG(NOTICE) << "transceiver already running";
+	}
 
 	// Start the SIP interface.
 	gSIPInterface.start();
@@ -170,9 +198,6 @@ int main(int argc, char *argv[])
 	// Configure the radio.
 	//
 
-	// Start the transceiver interface.
-	// Sleep long enough for the USRP to bootload.
-	sleep(10);
 	gTRX.start();
 
 	// Set up the interface to the radio.
@@ -181,7 +206,7 @@ int main(int argc, char *argv[])
 
 	// Tuning.
 	// Make sure its off for tuning.
-	C0radio->powerOff();
+	//C0radio->powerOff();
 	// Get the ARFCN list.
 	unsigned C0 = gConfig.getNum("GSM.Radio.C0");
 	unsigned numARFCNs = gConfig.getNum("GSM.Radio.ARFCNs");
@@ -359,7 +384,7 @@ int main(int argc, char *argv[])
 		LOG(EMERG) << "required configuration parameter " << e.key() << " not defined, aborting";
 	}
 
-	if (gTransceiverPid) kill(gTransceiverPid, SIGKILL);
+	//if (gTransceiverPid) kill(gTransceiverPid, SIGKILL);
 	close(sock);
 
 }

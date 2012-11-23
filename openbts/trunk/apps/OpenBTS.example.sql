@@ -3,6 +3,7 @@ BEGIN TRANSACTION;
 CREATE TABLE CONFIG ( KEYSTRING TEXT UNIQUE NOT NULL, VALUESTRING TEXT, STATIC INTEGER DEFAULT 0, OPTIONAL INTEGER DEFAULT 0, COMMENTS TEXT DEFAULT '');
 INSERT INTO "CONFIG" VALUES('CLI.SocketPath','/var/run/command',0,0,'Path for Unix domain datagram socket used for the OpenBTS console interface.');
 INSERT INTO "CONFIG" VALUES('Control.Reporting.PhysStatusTable','/var/run/OpenBTSChannelTable.db',1,0,'File path for channel status reporting database.  Static.');
+INSERT INTO "CONFIG" VALUES('Control.Reporting.TransactionTable','/var/run/OpenBTS/TransactionTable.db',1,0,'File path for transaction table database.  Static.');
 INSERT INTO "CONFIG" VALUES('Control.Reporting.TMSITable','/var/run/OpenBTSTMSITable.db',1,0,'File path for TMSITable database.  Static.');
 INSERT INTO "CONFIG" VALUES('Control.Call.QueryRRLP.Early',NULL,0,1,'If not NULL, query every MS for its location via RRLP during the setup of a call.');
 INSERT INTO "CONFIG" VALUES('Control.Call.QueryRRLP.Late',NULL,0,1,'If not NULL, query every MS for its location via RRLP during the teardown of a call.');
@@ -122,6 +123,8 @@ INSERT INTO "CONFIG" VALUES('SubscriberRegistry.Port','5064',0,0,'Port used by t
 INSERT INTO "CONFIG" VALUES('TRX.IP','127.0.0.1',1,0,'IP address of the transceiver application.  Static.');
 INSERT INTO "CONFIG" VALUES('TRX.Port','5700',1,0,'IP port of the transceiver application.  Static.');
 INSERT INTO "CONFIG" VALUES('TRX.RadioFrequencyOffset','128',1,0,'Fine-tuning adjustment for the transceiver master clock.  Roughly 170 Hz/step.  Set at the factory.  Do not adjust without proper calibration.  Static.');
+INSERT INTO "CONFIG" VALUES('TRX.Timeout.Clock','10',0,1,'How long to wait during a read operation from the transceiver before giving up.');
+INSERT INTO "CONFIG" VALUES('TRX.Timeout.Start','2',0,1,'How long to wait during system startup before checking to see if the transceiver can be reached.');
 INSERT INTO "CONFIG" VALUES('TRX.TxAttenOffset','2',1,0,'Hardware-specific gain adjustment for transmitter, matched to the power amplifier, expessed as an attenuationi in dB.  Set at the factory.  Do not adjust without proper calibration.  Static.');
 INSERT INTO "CONFIG" VALUES('VBTS.PA.Timeout','300',1,0,'The amount of time without any communications required for VBTS to power down the PA');
 INSERT INTO "CONFIG" VALUES('VBTS.PA.SerialLoc','/dev/ttyACM0',1,0,'The location of the Serial Line controlling the PA. Static.');
