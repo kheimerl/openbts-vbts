@@ -31,7 +31,7 @@ int sqlite3_run_query(sqlite3* DB, sqlite3_stmt *stmt)
 	while (src==SQLITE_BUSY) {
 		src = sqlite3_step(stmt);
 		if (src==SQLITE_BUSY) {
-			usleep(100000);
+			usleep(10000);
 		}
 	}
 	if ((src!=SQLITE_DONE) && (src!=SQLITE_ROW)) {
@@ -140,6 +140,7 @@ bool sqlite3_command(sqlite3* DB, const char* query)
 	if (sqlite3_prepare_statement(DB,&stmt,query)) return false;
 	// Run the query.
 	int src = sqlite3_run_query(DB,stmt);
+	sqlite3_finalize(stmt);
 	return src==SQLITE_DONE;
 }
 
