@@ -28,7 +28,7 @@ INSERT INTO "CONFIG" VALUES('Control.TMSITable.MaxSize','100000',0,0,'Maximum si
 INSERT INTO "CONFIG" VALUES('Control.VEA',1,0,1,'If not NULL, user very early assignment for speech call establishment.  See GSM 04.08 Section 7.3.2 for a detailed explanation of assignment types. If VEA is selected, GSM.CellSelection.NECI should be set to 1.  See GSM 04.08 Sections 9.1.8 and 10.5.2.4 for an explanation of the NECI bit.');
 INSERT INTO "CONFIG" VALUES('GSM.CCCH.AGCH.QMax','5',0,0,'Maximum number of access grants to be queued for transmission on AGCH before declaring congrestion.');
 INSERT INTO "CONFIG" VALUES('GSM.CCCH.CCCH-CONF','1',0,0,'CCCH configuration type.  See GSM 10.5.2.11 for encoding.  Value of 1 means we are using a C-V beacon.  Any other value selects a C-IV beacon.');
-INSERT INTO "CONFIG" VALUES('GSM.CCCH.PCH.Reserve','0',0,0,'Number of CCCH subchannels to reserve for paging.');
+INSERT INTO "CONFIG" VALUES('GSM.Channels.SDCCHReserve','0',0,0,'Number of SDCCHs to reserve for non-LUR operations. This can be used to force LUR transactions into a lower priority.');
 INSERT INTO "CONFIG" VALUES('GSM.CellSelection.CELL-RESELECT-HYSTERESIS','3',0,0,'Cell Reselection Hysteresis.  See GSM 04.08 10.5.2.4, Table 10.5.23 for encoding.  Encoding is $2N$ dB, values of $N$ are 0...7 for 0...14 dB.');
 INSERT INTO "CONFIG" VALUES('GSM.CellSelection.MS-TXPWR-MAX-CCH','0',0,0,'Cell selection parameters.  See GSM 04.08 10.5.2.4.');
 INSERT INTO "CONFIG" VALUES('GSM.CellSelection.NCCsPermitted','1',0,0,'NCCs Permitted.  An 8-bit mask of allowed NCCs.  Unless you are coordinating with another carrier, this should probably just select your own NCC.');
@@ -81,6 +81,7 @@ INSERT INTO "CONFIG" VALUES('GSM.Radio.PowerManager.SamplePeriod','2000',0,0,'Sa
 INSERT INTO "CONFIG" VALUES('GSM.Radio.PowerManager.TargetT3122','5000',0,0,'Target value for T3122, the random access hold-off timer, for the power control loop.');
 INSERT INTO "CONFIG" VALUES('GSM.Radio.RxGain','47',1,0,'Receiver gain setting in dB.  Ideal value is dictacted by the hardware.  This database parameter is static but the receiver gain can be modified in real time with the CLI rxgain command.  Static.');
 INSERT INTO "CONFIG" VALUES('GSM.Radio.RSSITarget','-50',0,0,'Target uplink RSSI for MS power control loop, in dB wrt to A/D full scale.  Should be 6-10 dB above the noise floor.');
+INSERT INTO "CONFIG" VALUES('GSM.Radio.NeedBSIC','0',0,0,'Does the Radio type require the full BSIC');
 INSERT INTO "CONFIG" VALUES('GSM.Timer.T3113','10000',0,0,'Paging timer T3113 in ms.  This is the timeout for a handset to respond to a paging request.  This should usually be the same as SIP.Timer.B in your VoIP network.');
 INSERT INTO "CONFIG" VALUES('GSM.Timer.T3122Max','255000',0,0,'Maximum allowed value for T3122, the RACH holdoff timer, in milliseconds.');
 INSERT INTO "CONFIG" VALUES('GSM.Timer.T3122Min','2000',0,0,'Minimum allowed value for T3122, the RACH holdoff timer, in milliseconds.');
@@ -94,6 +95,7 @@ INSERT INTO "CONFIG" VALUES('Log.Level.SMSControl.cpp','INFO',0,1,'Default confi
 INSERT INTO "CONFIG" VALUES('NTP.Server','pool.ntp.org',0,1,'NTP server(s) for time-of-day clock syncing.  For multiple servers, use a space-delimited list.  If left undefined, NTP will not be used, but it is strongly recommended.');
 INSERT INTO "CONFIG" VALUES('RTP.Range','98',1,0,'Range of RTP port pool.  Pool is RTP.Start to RTP.Range-1.  Static.');
 INSERT INTO "CONFIG" VALUES('RTP.Start','16484',1,0,'Base of RTP port pool.  Pool is RTP.Start to RTP.Range-1.  Static.');
+INSERT INTO "CONFIG" VALUES('SIP.RFC3428.NoTrying','0',0,1,'If NULL or 0, send 100 Trying response to SIP MESSAGE, even though that violates RFC-3428. In other words, to actually comply with the RFC, set this to something other than NULL or 0');
 INSERT INTO "CONFIG" VALUES('SIP.DTMF.RFC2833','1',0,1,'If not NULL, use RFC-2833 (RTP event signalling) for in-call DTMF.');
 INSERT INTO "CONFIG" VALUES('SIP.DTMF.RFC2833.PayloadType','101',0,1,'Payload type to use for RFC-2833 telephone event packets.  If SIP.DTMF.2833 is defined, this must also be defined.');
 INSERT INTO "CONFIG" VALUES('SIP.DTMF.RFC2967',NULL,0,1,'If not NULL, use RFC-2967 (SIP INFO method) for in-call DTMF.');

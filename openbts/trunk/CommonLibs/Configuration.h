@@ -1,6 +1,7 @@
 /*
 * Copyright 2009, 2010 Free Software Foundation, Inc.
-* Copyright 2010, 2012 Kestrel Signal Processing, Inc.
+* Copyright 2010 Kestrel Signal Processing, Inc.
+* Copyright 2011, 2012 Range Networks, Inc.
 *
 * This software is distributed under the terms of the GNU Affero Public License.
 * See the COPYING file in the main directory for details.
@@ -32,7 +33,6 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <syslog.h>
 
 #include <map>
 #include <vector>
@@ -184,12 +184,11 @@ class ConfigurationTable {
 	sqlite3* mDB;				///< database connection
 	ConfigurationMap mCache;	///< cache of recently access configuration values
 	mutable Mutex mLock;		///< control for multithreaded access to the cache
-	int mFacility;
 
 	public:
 
 
-	ConfigurationTable(const char* filename = ":memory:", const char *wCmdName = 0, int wFacility = LOG_USER);
+	ConfigurationTable(const char* filename = ":memory:", const char *wCmdName = 0);
 
 	/** Return true if the key is used in the table.  */
 	bool defines(const std::string& key);

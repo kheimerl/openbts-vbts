@@ -42,6 +42,7 @@
 #include <GSMLogicalChannel.h>
 #include <GSMConfig.h>
 
+#include <Reporting.h>
 #include <Logger.h>
 #undef WARNING
 
@@ -132,6 +133,9 @@ void AccessGrantResponder(
 	// This GSM's version of medium access control.
 	// Papa Legba, open that door...
 
+	gReports.incr("OpenBTS.GSM.RR.RACH.TA.All",(int)(timingError));
+	gReports.incr("OpenBTS.GSM.RR.RACH.RA.All",RA);
+
 	// Are we holding off new allocations?
 	if (gBTS.hold()) {
 		LOG(NOTICE) << "ignoring RACH due to BTS hold-off";
@@ -173,7 +177,8 @@ void AccessGrantResponder(
 	// Check for location update.
 	// This gives LUR a lower priority than other services.
 	if (requestingLUR(RA)) {
-		if (gBTS.SDCCHAvailable()<=gConfig.getNum("GSM.CCCH.PCH.Reserve")) {
+		// Don't answer this LUR if it will not leave enough channels open for other operations.
+		if ((int)gBTS.SDCCHAvailable()<=gConfig.getNum("GSM.Channels.SDCCHReserve")) {
 			unsigned waitTime = gBTS.growT3122()/1000;
 			LOG(WARNING) << "LUR congestion, RA=" << RA << " T3122=" << waitTime;
 			const L3ImmediateAssignmentReject reject(L3RequestReference(RA,when),waitTime);
@@ -213,6 +218,7 @@ void AccessGrantResponder(
 
 	// Set the channel physical parameters from the RACH burst.
 	LCH->setPhy(RSSI,timingError);
+	gReports.incr("OpenBTS.GSM.RR.RACH.TA.Accepted",(int)(timingError));
 
 	// Assignment, GSM 04.08 3.3.1.1.3.1.
 	// Create the ImmediateAssignment message.

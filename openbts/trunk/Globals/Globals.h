@@ -37,6 +37,7 @@
 #include <TMSITable.h>
 #include <SubscriberRegistry.h>
 #include <PARPCClient.h>
+#include <Reporting.h>
 
 
 /** Date-and-time string, defined in OpenBTS.cpp. */
@@ -66,7 +67,7 @@ extern GSM::PhysicalStatus gPhysStatus;
 /** The subscriber registry */
 extern SubscriberRegistry gSubscriberRegistry;
 
-//kurtis
 extern PARPCClient gRPCClient;
 
+extern ReportingTable gReports;
 #endif

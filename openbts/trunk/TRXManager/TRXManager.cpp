@@ -24,6 +24,7 @@
 
 
 
+#include <Reporting.h>
 
 #include "TRXManager.h"
 #include "GSMCommon.h"
@@ -90,6 +91,7 @@ void TransceiverManager::clockHandler()
 	// Did the transceiver die??
 	if (msgLen<0) {
 		LOG(ALERT) << "TRX clock interface timed out, assuming TRX is dead.";
+		gReports.incr("OpenBTS.Exit.Error.TransceiverHeartbeat");
 		abort();
 	}
 
@@ -430,6 +432,18 @@ bool ::ARFCNManager::setTSC(unsigned TSC)
 	int status = sendCommand("SETTSC",TSC);
 	if (status!=0) {
 		LOG(ALERT) << "SETTSC failed with status " << status;
+		return false;
+	}
+	return true;
+}
+
+
+bool ::ARFCNManager::setBSIC(unsigned BSIC)
+{
+	assert(BSIC < 64);
+	int status = sendCommand("SETBSIC",BSIC);
+	if (status!=0) {
+		LOG(ALERT) << "SETBSIC failed with status " << status;
 		return false;
 	}
 	return true;
