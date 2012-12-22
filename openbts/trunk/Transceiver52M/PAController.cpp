@@ -53,42 +53,47 @@ using namespace std;
 
 //I hate C++ -kurtis
 
-//should make these configurable later
-#define SERIAL_LOC "/dev/ttyACM0"
-#define ON_CMD "O0=1\r"
-#define OFF_CMD "O0=0\r"
+#define DEFAULT_START_TIME "00:00"
+#define DEFAULT_END_TIME "00:00"
+#define TIME_FORMAT "%H:%M"
 
 static bool pa_on = false;
 static Mutex pa_lock;
 static time_t last_update = NULL;
+
+static struct tm start_tm;
+static struct tm end_tm;
+
 #ifndef DONT_USE_SERIAL
-static int fd1 = open (SERIAL_LOC, O_RDWR | O_NOCTTY | O_NDELAY);
+static int fd1;
+static string on_cmd;
+static string off_cmd;
 #endif
 
 //hack for now, as I want one source file for both RAD1 and UHD/USRP1
 
 /* assumes you hold the lock */
 static void actual_pa_off(){
-  LOG(ALERT) << "PA Off";
-  pa_on = false;
+    LOG(ALERT) << "PA Off";
+    pa_on = false;
 #ifndef DONT_USE_SERIAL
-  fcntl(fd1,F_SETFL,0);
-  write(fd1,OFF_CMD, strlen(OFF_CMD));
+    fcntl(fd1,F_SETFL,0);
+    write(fd1,off_cmd.c_str(), off_cmd.length());
 #endif
 }
 
 static void turn_pa_on(bool resetTime){
-  ScopedLock lock (pa_lock);
-  //don't think I need to garbage collect, it's just an int
-  if (!pa_on || resetTime){
-    LOG(ALERT) << "PA On";
-    last_update = time(NULL);
-    pa_on = true;
+    ScopedLock lock (pa_lock);
+    //don't think I need to garbage collect, it's just an int
+    if (!pa_on || resetTime){
+	LOG(ALERT) << "PA On";
+	last_update = time(NULL);
+	pa_on = true;
 #ifndef DONT_USE_SERIAL
-    fcntl(fd1,F_SETFL,0);
-    write(fd1,ON_CMD, strlen(ON_CMD));
+	fcntl(fd1,F_SETFL,0);
+	write(fd1,on_cmd.c_str(), on_cmd.length());
 #endif
-  }
+    }
 }
 
 static void turn_pa_off(){
@@ -100,113 +105,152 @@ static void turn_pa_off(){
    by the transceiver, allowing it to be updated
    almost immediately after time stamp ends */
 bool update_pa(){
-  int pa_timeout = gConfig.getNum("VBTS.PA.Timeout", 5 * 60);
-  ScopedLock lock (pa_lock);
-  if (pa_on && last_update && 
-    time(NULL) > pa_timeout + last_update){
-    actual_pa_off();
-    LOG(ALERT) << "Timeout:" << pa_timeout;
-  }
-  return pa_on;
+
+    //first check for time
+    time_t rawtime;
+    struct tm * timeinfo; //this is statically defined in library, no need to clear
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
+    //exit if we're after start time and before end time
+    if (((timeinfo->tm_hour > start_tm.tm_hour) ||
+	 (timeinfo->tm_hour == start_tm.tm_hour && timeinfo->tm_min < start_tm.tm_min)) &&
+	((timeinfo->tm_hour < end_tm.tm_hour) || 
+	 (timeinfo->tm_hour == end_tm.tm_hour &&  timeinfo->tm_min > end_tm.tm_min))){
+	turn_pa_on(true);
+	return pa_on;
+    }
+
+    //otherwise see if we should turn the PA off
+    int pa_timeout = gConfig.getNum("VBTS.PA.Timeout", 5 * 60);
+    ScopedLock lock (pa_lock);
+    if (pa_on && last_update && 
+	time(NULL) > pa_timeout + last_update){
+	actual_pa_off();
+	LOG(ALERT) << "Timeout:" << pa_timeout;
+    }
+    return pa_on;
 }
 
 //the "turn the PA on method"
 class on_method : public xmlrpc_c::method {
 public:
-  on_method() {
-    this->_signature = "n:";
-    this->_help = "This method turns the PA on";
-  }
-  void
-  execute(xmlrpc_c::paramList const& paramList,
-	  xmlrpc_c::value *   const  retvalP) {
-    turn_pa_on(true);
-    *retvalP = xmlrpc_c::value_nil();
-  }
+    on_method() {
+	this->_signature = "n:";
+	this->_help = "This method turns the PA on";
+    }
+    void
+    execute(xmlrpc_c::paramList const& paramList,
+	    xmlrpc_c::value *   const  retvalP) {
+	turn_pa_on(true);
+	*retvalP = xmlrpc_c::value_nil();
+    }
 };
 
 //the "turn the PA on method"
 class off_method : public xmlrpc_c::method {
 public:
-  off_method() {
-    this->_signature = "n:"; 
-    this->_help = "This method turns the PA off";
-  }
-  void
-  execute(xmlrpc_c::paramList const& paramList,
-	  xmlrpc_c::value *   const  retvalP) {
-    turn_pa_off();
-    *retvalP = xmlrpc_c::value_nil();
-  }
+    off_method() {
+	this->_signature = "n:"; 
+	this->_help = "This method turns the PA off";
+    }
+    void
+    execute(xmlrpc_c::paramList const& paramList,
+	    xmlrpc_c::value *   const  retvalP) {
+	turn_pa_off();
+	*retvalP = xmlrpc_c::value_nil();
+    }
 };
 
 //the "turn the PA on method"
 class status_method : public xmlrpc_c::method {
 public:
-  status_method() {
-    this->_signature = "b:";
-    this->_help = "This method returns the PA status";
-  }
-  void
-  execute(xmlrpc_c::paramList const& paramList,
-	  xmlrpc_c::value *   const  retvalP) {
-    *retvalP = xmlrpc_c::value_boolean(update_pa());
-  }
+    status_method() {
+	this->_signature = "b:";
+	this->_help = "This method returns the PA status";
+    }
+    void
+    execute(xmlrpc_c::paramList const& paramList,
+	    xmlrpc_c::value *   const  retvalP) {
+	*retvalP = xmlrpc_c::value_boolean(update_pa());
+    }
 };
 
+/* please instantiate me only once -kurtis*/
 PAController::PAController()
 {
+    
+    registry = new xmlrpc_c::registry();
+    
+    xmlrpc_c::methodPtr const onMethod(new on_method);
+    xmlrpc_c::methodPtr const offMethod(new off_method);
+    xmlrpc_c::methodPtr const statusMethod(new status_method);
+    
+    registry->addMethod("on", onMethod);
+    registry->addMethod("off", offMethod);
+    registry->addMethod("status", statusMethod);
+    
+    long rpc_port = gConfig.getNum("VBTS.PA.RPCPort", 8080);
+    string rpc_log = gConfig.getStr("VBTS.PA.RPCLogLoc", "/tmp/xmlrpc.log");
+    
+    RPCServer = new xmlrpc_c::serverAbyss(*registry,
+					  rpc_port,
+					  rpc_log
+	);
 
-  registry = new xmlrpc_c::registry();
+#ifndef DONT_USE_SERIAL
+    string serial_loc = gConfig.getStr("VBTS.PA.SerialLoc", "/dev/ttyACM0");
+    fd1 = open (serial_loc.c_str(), O_RDWR | O_NOCTTY | O_NDELAY);
 
-  xmlrpc_c::methodPtr const onMethod(new on_method);
-  xmlrpc_c::methodPtr const offMethod(new off_method);
-  xmlrpc_c::methodPtr const statusMethod(new status_method);
+    on_cmd = gConfig.getStr("VBTS.PA.OnCommand", "O0=1\r");
+    off_cmd = gConfig.getStr("VBTS.PA.OffCommand", "O0=0\r");
+#endif
 
-  registry->addMethod("on", onMethod);
-  registry->addMethod("off", offMethod);
-  registry->addMethod("status", statusMethod);
+    string start_time = gConfig.getStr("VBTS.PA.StartTime", DEFAULT_START_TIME);
+    string end_time = gConfig.getStr("VBTS.PA.EndTime", DEFAULT_END_TIME);
 
-  long rpc_port = gConfig.getNum("VBTS.PA.RPCPort", 8080);
-  string rpc_log = gConfig.getStr("VBTS.PA.RPCLogLoc", "/tmp/xmlrpc.log");
-
-  RPCServer = new xmlrpc_c::serverAbyss(*registry,
-					rpc_port,
-					rpc_log
-					);
+    if (strptime(start_time.c_str(), TIME_FORMAT, &start_tm) ==  NULL){
+	LOG(ALERT) << "MALFORMED START TIME";
+	strptime(DEFAULT_START_TIME, TIME_FORMAT, &start_tm);
+    }
+    
+    if (strptime(end_time.c_str(), TIME_FORMAT, &end_tm) ==  NULL){
+	LOG(ALERT) << "MALFORMED END TIME";
+	strptime(DEFAULT_END_TIME, TIME_FORMAT, &end_tm);
+    }
+    
 }
 
 PAController::~PAController()
 {
-  //should call the deconstructor and close cleanly... right?
-  delete RPCServer;
-  delete registry;
+    //should call the deconstructor and close cleanly... right?
+    delete RPCServer;
+    delete registry;
 }
 
 void PAController::run()
 {
-  RPCServer->run();
+    RPCServer->run();
 }
 
 void PAController::on()
 {
-  turn_pa_on(false);
+    turn_pa_on(false);
 }
 
 void PAController::off()
 {
-  turn_pa_off();
+    turn_pa_off();
 }
 
 bool PAController::state()
 {
-  return update_pa();
+    return update_pa();
 }
 
 /* non-member functions */
 void runController(PAController* cont)
 {
-  Thread RPCThread;
-  RPCThread.start((void*(*)(void*)) &PAController::run, cont);
-  cont->on();
+    Thread RPCThread;
+    RPCThread.start((void*(*)(void*)) &PAController::run, cont);
+    cont->on();
 }
