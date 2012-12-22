@@ -130,7 +130,11 @@ INSERT INTO "CONFIG" VALUES('TRX.Timeout.Start','2',0,1,'How long to wait during
 INSERT INTO "CONFIG" VALUES('TRX.TxAttenOffset','2',1,0,'Hardware-specific gain adjustment for transmitter, matched to the power amplifier, expessed as an attenuationi in dB.  Set at the factory.  Do not adjust without proper calibration.  Static.');
 INSERT INTO "CONFIG" VALUES('VBTS.PA.Timeout','300',1,0,'The amount of time without any communications required for VBTS to power down the PA');
 INSERT INTO "CONFIG" VALUES('VBTS.PA.SerialLoc','/dev/ttyACM0',1,0,'The location of the Serial Line controlling the PA. Static.');
+INSERT INTO "CONFIG" VALUES('VBTS.PA.OnCommand','O0=1\r',1,0,'The command send over the serial line to turn the PA on. Static.');
+INSERT INTO "CONFIG" VALUES('VBTS.PA.OffCommand','O0=0\r',1,0,'The command send over the serial line to turn the PA off. Static.');
 INSERT INTO "CONFIG" VALUES('VBTS.PA.RPCPort','8080',1,0,'The port the RPC server listens on. Static.');
 INSERT INTO "CONFIG" VALUES('VBTS.PA.RPCLogLoc','/tmp/xmlrpc.log',1,0,'The Location of the RPC logs. Static.');
+INSERT INTO "CONFIG" VALUES('VBTS.PA.StartTime','06:00',1,0,'The time to start transmitting regardless of idle time. Static.');
+INSERT INTO "CONFIG" VALUES('VBTS.PA.EndTime','21:00',1,0,'The time to end transmitting regardless of idle time. Static.');
 INSERT INTO "CONFIG" VALUES('VBTS.Transceiver.Overthresh','100',1,0,'The power (over the noise floor) required to wake VBTS');
 COMMIT;
