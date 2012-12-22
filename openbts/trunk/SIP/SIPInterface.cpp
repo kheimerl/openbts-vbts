@@ -188,6 +188,7 @@ void SIPInterface::write(const struct sockaddr_in* dest, osip_message_t *msg)
 	}
 	//if it's any of these transactions, record it in the database
 	// FIXME - We should really remove all direct access to the SR.
+	/*
 	string name = osip_message_get_from(msg)->url->username;
 	if (msg->sip_method && 
 	    (!strncmp(msg->sip_method, "INVITE", 6) ||
@@ -202,6 +203,7 @@ void SIPInterface::write(const struct sockaddr_in* dest, osip_message_t *msg)
 			LOG(INFO) << "SR port Update Problem";
 		}
 	}
+	*/
 	char firstLine[100];
 	sscanf(str,"%100[^\n]",firstLine);
 	LOG(INFO) << "write " << firstLine;
