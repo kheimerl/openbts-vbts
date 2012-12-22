@@ -350,6 +350,7 @@ class TLSubmit : public TLMessage {
 
 	int MTI() const { return SUBMIT; }
 
+	const unsigned PI() const { return mPI; }
 	const TLAddress& DA() const { return mDA; }
 	const TLUserData& UD() const { return mUD; }
 
@@ -405,14 +406,16 @@ class TLDeliver : public TLMessage {
 	
 	int MTI() const { return DELIVER; }
 
+	const unsigned PID() const { return mPID; }
+	const TLAddress& OA() const { return mOA; }
+	const TLTimestamp& SCTS() const { return mSCTS; }
+	const TLUserData& UD() const { return mUD; }
+
 	size_t l2BodyLength() const;
 	void writeBody( TLFrame& frame, size_t& wp ) const;
 	void parseBody(const TLFrame&, size_t&) { assert(0); }
 	virtual void text( std::ostream& os ) const;
 };
-
-
-TLMessage * parseTL( const TLFrame& frame );
 
 
 //@} // SMS TL Messages

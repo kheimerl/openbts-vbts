@@ -573,7 +573,13 @@ SMq::handle_response(short_msg_p_list::iterator qmsgit)
 		break;
 
 	case 4: // 4xx -- failure by client
-		// This means the original message was bad.  Bounce it.
+		// 480 Temporarily Unavailable - means we have to retry later.
+		// Most likely this means that a subscriber left network coverage
+		// without unregistering from the network.
+		// TODO:: Store message until subscriber becomes available.
+		//        For now we just bounce it to originator. :(
+
+		// Other 4xx codes mean the original message was bad.  Bounce it.
 		{
 			ostringstream errmsg;
 			errmsg << qmsg->parsed->status_code << " "
@@ -1235,12 +1241,12 @@ SMq::bounce_message(short_msg_pending *sent_msg, const char *errstr)
 	std::string thetext;
 	int status;
 
-	username = sent_msg->parsed->to->url->username;
-	thetext = sent_msg->get_text();
-
 	LOG(NOTICE) << "Bouncing " << sent_msg->qtag << " from "
 	     << sent_msg->parsed->from->url->username  // his phonenum
 	     << " to " << username << ": " << errstr;
+
+	username = sent_msg->parsed->to->url->username;
+	thetext = sent_msg->get_text();
 
 	errmsg << "Can't send your SMS to " << username << ": ";
 	if (errstr)
