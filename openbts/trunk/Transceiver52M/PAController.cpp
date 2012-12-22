@@ -108,15 +108,15 @@ bool update_pa(){
 
     //first check for time
     time_t rawtime;
-    struct tm * timeinfo; //this is statically defined in library, no need to free
+    struct tm * timeinfo; //this is statically defined in library, no need to clear
     time(&rawtime);
     timeinfo = localtime(&rawtime);
     //exit if we're after start time and before end time
     if (((timeinfo->tm_hour > start_tm.tm_hour) ||
-	 (timeinfo->tm_hour == start_tm.tm_hour && timeinfo->tm_min > start_tm.tm_min)) &&
+	 (timeinfo->tm_hour == start_tm.tm_hour && timeinfo->tm_min < start_tm.tm_min)) &&
 	((timeinfo->tm_hour < end_tm.tm_hour) || 
-	 (timeinfo->tm_hour == end_tm.tm_hour &&  timeinfo->tm_min < end_tm.tm_min))){
-	turn_pa_on(false);
+	 (timeinfo->tm_hour == end_tm.tm_hour &&  timeinfo->tm_min > end_tm.tm_min))){
+	turn_pa_on(true);
 	return pa_on;
     }
 
@@ -124,7 +124,7 @@ bool update_pa(){
     int pa_timeout = gConfig.getNum("VBTS.PA.Timeout", 5 * 60);
     ScopedLock lock (pa_lock);
     if (pa_on && last_update && 
-	rawtime > pa_timeout + last_update){
+	time(NULL) > pa_timeout + last_update){
 	actual_pa_off();
 	LOG(ALERT) << "Timeout:" << pa_timeout;
     }
