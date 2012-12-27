@@ -113,10 +113,10 @@ bool update_pa(){
     timeinfo = localtime(&rawtime);
     //exit if we're after start time and before end time
     if (((timeinfo->tm_hour > start_tm.tm_hour) ||
-	 (timeinfo->tm_hour == start_tm.tm_hour && timeinfo->tm_min < start_tm.tm_min)) &&
+	 (timeinfo->tm_hour == start_tm.tm_hour && timeinfo->tm_min > start_tm.tm_min)) &&
 	((timeinfo->tm_hour < end_tm.tm_hour) || 
-	 (timeinfo->tm_hour == end_tm.tm_hour &&  timeinfo->tm_min > end_tm.tm_min))){
-	turn_pa_on(true);
+	 (timeinfo->tm_hour == end_tm.tm_hour &&  timeinfo->tm_min < end_tm.tm_min))){
+	turn_pa_on(false);
 	return pa_on;
     }
 
