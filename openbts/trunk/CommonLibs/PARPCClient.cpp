@@ -65,10 +65,8 @@ void PARPCClient::driveLoop()
 	    }
 	    changed = false;
 	}
-	else {
-	    //yield
-	    mDriveThread.yield();
-	}
+	usleep(10000);
+	//mDriveThread.yield();
     }
 }
 
