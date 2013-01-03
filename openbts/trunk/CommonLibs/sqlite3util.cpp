@@ -31,7 +31,7 @@ int sqlite3_run_query(sqlite3* DB, sqlite3_stmt *stmt)
 	while (src==SQLITE_BUSY) {
 		src = sqlite3_step(stmt);
 		if (src==SQLITE_BUSY) {
-			usleep(10000);
+			usleep(100000);
 		}
 	}
 	if ((src!=SQLITE_DONE) && (src!=SQLITE_ROW)) {
