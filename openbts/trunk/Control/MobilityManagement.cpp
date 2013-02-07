@@ -194,9 +194,6 @@ void Control::LocationUpdatingController(const L3LocationUpdatingRequest* lur, L
 	// This allows us to configure Open Registration
 	bool openRegistration = false;
 	if (gConfig.defines("Control.LUR.OpenRegistration")) {
-		if (!gConfig.defines("Control.LUR.OpenRegistration.Message")) {
-			gConfig.set("Control.LUR.OpenRegistration.Message","Welcome to the test network.  Your IMSI is ");
-		}
 		Regexp rxp(gConfig.getStr("Control.LUR.OpenRegistration").c_str());
 		openRegistration = rxp.match(IMSI);
 		if (gConfig.defines("Control.LUR.OpenRegistration.Reject")) {
@@ -315,11 +312,15 @@ void Control::LocationUpdatingController(const L3LocationUpdatingRequest* lur, L
 	// If this is an IMSI attach, send a welcome message.
 	if (IMSIAttach) {
 		if (success) {
+		    if (gConfig.defines("Control.LUR.NormalRegistration.Message")){
 			sendWelcomeMessage( "Control.LUR.NormalRegistration.Message",
-				"Control.LUR.NormalRegistration.ShortCode", IMSI, DCCH);
+					    "Control.LUR.NormalRegistration.ShortCode", IMSI, DCCH);
+		    }
 		} else {
+		    if (gConfig.defines("Control.LUR.OpenRegistration.Message")){
 			sendWelcomeMessage( "Control.LUR.OpenRegistration.Message",
-				"Control.LUR.OpenRegistration.ShortCode", IMSI, DCCH);
+					    "Control.LUR.OpenRegistration.ShortCode", IMSI, DCCH);
+		    }
 		}
 	}
 
