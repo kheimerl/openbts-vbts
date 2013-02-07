@@ -65,7 +65,7 @@ extern Control::TMSITable gTMSITable;
 extern GSM::PhysicalStatus gPhysStatus;
 
 /** The subscriber registry */
-extern SubscriberRegistry gSubscriberRegistry;
+//extern SubscriberRegistry gSubscriberRegistry;
 
 extern PARPCClient gRPCClient;
 

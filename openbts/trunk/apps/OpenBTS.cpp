@@ -93,7 +93,7 @@ GSMConfig gBTS;
 TransceiverManager gTRX(gConfig.getNum("GSM.Radio.ARFCNs"), gConfig.getStr("TRX.IP").c_str(), gConfig.getNum("TRX.Port"));
 
 // Subscriber registry
-SubscriberRegistry gSubscriberRegistry;
+//SubscriberRegistry gSubscriberRegistry;
 
 //kurtis
 PARPCClient gRPCClient;
@@ -317,7 +317,7 @@ int main(int argc, char *argv[])
 	gTransactionTable.init(gConfig.getStr("Control.Reporting.TransactionTable").c_str());
 	gPhysStatus.open(gConfig.getStr("Control.Reporting.PhysStatusTable").c_str());
 	gBTS.init();
-	gSubscriberRegistry.init();
+	//gSubscriberRegistry.init();
 	gParser.addCommands();
 
 	COUT("\nStarting the system...");
