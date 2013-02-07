@@ -87,6 +87,7 @@ string getConfig()
 
 RRLPServer::RRLPServer(L3MobileIdentity wMobileID, LogicalChannel *wDCCH)
 {
+    /*
 	trouble = false;
 	url = gConfig.getStr("GSM.RRLP.SERVER.URL", "");
 	if (url.length() == 0) {
@@ -108,24 +109,29 @@ RRLPServer::RRLPServer(L3MobileIdentity wMobileID, LogicalChannel *wDCCH)
 			trouble = true;
 		}
 	}
+    */
 }
 
 bool RRLPServer::assist()
 {
 	if (trouble) return false;
 	query = "query=assist";
-	return transact();
+	//return transact();
+	return false;
 }
 
 bool RRLPServer::locate()
 {
 	if (trouble) return false;
 	query = "query=loc";
-	return transact();
+	//return transact();
+	return false;
 }
 
 bool RRLPServer::transact()
 {
+    return false;
+    /*
 	vector<string> apdus;
 	while (true) {
 		// bounce off server
@@ -271,6 +277,7 @@ bool RRLPServer::transact()
 		// next query for server
 		query = "query=apdu&apdu=" + apdu;
 	}
+    */
 	// not reached
 }
 

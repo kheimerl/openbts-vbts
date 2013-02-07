@@ -221,6 +221,7 @@ void Control::LocationUpdatingController(const L3LocationUpdatingRequest* lur, L
 			LOG(WARNING) << "failed access to TMSITable";
 		} 
 
+		/*
 		//query subscriber registry for old imei, update if neccessary
 		string name = string("IMSI") + IMSI;
 		string old_imei = gSubscriberRegistry.imsiGet(name, "hardware");
@@ -235,6 +236,7 @@ void Control::LocationUpdatingController(const L3LocationUpdatingRequest* lur, L
 				LOG(INFO) << "SR hardware update problem";
 			}
 		}
+		*/
 		delete msg;
 	}
 
