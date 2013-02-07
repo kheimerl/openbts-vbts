@@ -79,6 +79,7 @@ static void actual_pa_off(){
 #ifndef DONT_USE_SERIAL
     fcntl(fd1,F_SETFL,0);
     write(fd1,off_cmd.c_str(), off_cmd.length());
+    write(fd1,off_cmd.c_str(), off_cmd.length());
 #endif
 }
 
@@ -91,6 +92,7 @@ static void turn_pa_on(bool resetTime){
 	pa_on = true;
 #ifndef DONT_USE_SERIAL
 	fcntl(fd1,F_SETFL,0);
+	write(fd1,on_cmd.c_str(), on_cmd.length());
 	write(fd1,on_cmd.c_str(), on_cmd.length());
 #endif
     }
