@@ -328,7 +328,7 @@ SoftVector *Transceiver::pullRadioVector(GSM::Time &wTime,
   //kurtis shit
   if (energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold + overthresh,&avgPwr)) {
     //LOG(ALERT) << "Updating:" << sqrt(avgPwr) - mEnergyThreshold;
-    mRadioInterface->pa.on();
+    mRadioInterface->pa.on("Energy Detected");
   }
 
   if (!energyDetect(*vectorBurst,20*mSamplesPerSymbol,mEnergyThreshold,&avgPwr)) {

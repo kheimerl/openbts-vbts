@@ -73,8 +73,8 @@ static string off_cmd;
 //hack for now, as I want one source file for both RAD1 and UHD/USRP1
 
 /* assumes you hold the lock */
-static void actual_pa_off(){
-    LOG(ALERT) << "PA Off";
+static void actual_pa_off(string reason){
+    LOG(ALERT) << "PA Off: " << reason;
     pa_on = false;
 #ifndef DONT_USE_SERIAL
     fcntl(fd1,F_SETFL,0);
@@ -83,11 +83,11 @@ static void actual_pa_off(){
 #endif
 }
 
-static void turn_pa_on(bool resetTime){
+static void turn_pa_on(bool resetTime, string reason){
     ScopedLock lock (pa_lock);
     //don't think I need to garbage collect, it's just an int
     if (!pa_on || resetTime){
-	LOG(ALERT) << "PA On";
+	LOG(ALERT) << "PA On: " << reason;
 	last_update = time(NULL);
 	pa_on = true;
 #ifndef DONT_USE_SERIAL
@@ -98,9 +98,9 @@ static void turn_pa_on(bool resetTime){
     }
 }
 
-static void turn_pa_off(){
+static void turn_pa_off(string reason){
   ScopedLock lock (pa_lock);
-  actual_pa_off();
+  actual_pa_off(reason);
 }
 
 /* key point: this is being called all the time
@@ -118,7 +118,7 @@ bool update_pa(){
 	 (timeinfo->tm_hour == start_tm.tm_hour && timeinfo->tm_min > start_tm.tm_min)) &&
 	((timeinfo->tm_hour < end_tm.tm_hour) || 
 	 (timeinfo->tm_hour == end_tm.tm_hour &&  timeinfo->tm_min < end_tm.tm_min))){
-	turn_pa_on(false);
+	turn_pa_on(false, "Time of Day");
 	return pa_on;
     }
 
@@ -127,7 +127,7 @@ bool update_pa(){
     ScopedLock lock (pa_lock);
     if (pa_on && last_update && 
 	rawtime > pa_timeout + last_update){
-	actual_pa_off();
+	actual_pa_off("Timeout");
 	LOG(ALERT) << "Timeout:" << pa_timeout;
     }
     return pa_on;
@@ -143,7 +143,22 @@ public:
     void
     execute(xmlrpc_c::paramList const& paramList,
 	    xmlrpc_c::value *   const  retvalP) {
-	turn_pa_on(true);
+	turn_pa_on(true, "None");
+	*retvalP = xmlrpc_c::value_nil();
+    }
+};
+
+//the "turn the PA on method"
+class on_method_reason : public xmlrpc_c::method {
+public:
+    on_method_reason() {
+	this->_signature = "n:s";
+	this->_help = "This method turns the PA on and records the reason";
+    }
+    void
+    execute(xmlrpc_c::paramList const& paramList,
+	    xmlrpc_c::value *   const  retvalP) {
+	turn_pa_on(true, paramList.getString(0));
 	*retvalP = xmlrpc_c::value_nil();
     }
 };
@@ -158,12 +173,26 @@ public:
     void
     execute(xmlrpc_c::paramList const& paramList,
 	    xmlrpc_c::value *   const  retvalP) {
-	turn_pa_off();
+	turn_pa_off("None");
 	*retvalP = xmlrpc_c::value_nil();
     }
 };
 
 //the "turn the PA on method"
+class off_method_reason : public xmlrpc_c::method {
+public:
+    off_method_reason() {
+	this->_signature = "n:s"; 
+	this->_help = "This method turns the PA off and records the reason";
+    }
+    void
+    execute(xmlrpc_c::paramList const& paramList,
+	    xmlrpc_c::value *   const  retvalP) {
+	turn_pa_off(paramList.getString(0));
+	*retvalP = xmlrpc_c::value_nil();
+    }
+};
+
 class status_method : public xmlrpc_c::method {
 public:
     status_method() {
@@ -184,11 +213,15 @@ PAController::PAController()
     registry = new xmlrpc_c::registry();
     
     xmlrpc_c::methodPtr const onMethod(new on_method);
+    xmlrpc_c::methodPtr const onMethodReason(new on_method_reason);
     xmlrpc_c::methodPtr const offMethod(new off_method);
+    xmlrpc_c::methodPtr const offMethodReason(new off_method_reason);
     xmlrpc_c::methodPtr const statusMethod(new status_method);
     
     registry->addMethod("on", onMethod);
+    registry->addMethod("onWithReason", onMethodReason);
     registry->addMethod("off", offMethod);
+    registry->addMethod("offWithReason", offMethodReason);
     registry->addMethod("status", statusMethod);
     
     long rpc_port = gConfig.getNum("VBTS.PA.RPCPort", 8080);
@@ -234,14 +267,14 @@ void PAController::run()
     RPCServer->run();
 }
 
-void PAController::on()
+void PAController::on(string reason)
 {
-    turn_pa_on(false);
+    turn_pa_on(false, reason);
 }
 
-void PAController::off()
+void PAController::off(string reason)
 {
-    turn_pa_off();
+    turn_pa_off(reason);
 }
 
 bool PAController::state()
@@ -254,5 +287,5 @@ void runController(PAController* cont)
 {
     Thread RPCThread;
     RPCThread.start((void*(*)(void*)) &PAController::run, cont);
-    cont->on();
+    cont->on("Starting");
 }

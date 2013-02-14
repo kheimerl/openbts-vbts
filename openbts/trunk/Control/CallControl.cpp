@@ -530,6 +530,7 @@ bool updateCallTraffic(TransactionEntry *transaction, GSM::TCHFACCHLogicalChanne
 	bool activity = false;
 
 	//kurtis
+	//LOG (INFO) << "RPC On: Call Traffic";
 	gRPCClient.on();
 	// Transfer in the downlink direction (RTP->GSM).
 	// Blocking call.  On average returns 1 time per 20 ms.

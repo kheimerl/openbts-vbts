@@ -42,6 +42,8 @@
 #include <xmlrpc-c/server_abyss.hpp>
 #include <string.h>
 
+using namespace std;
+
 bool update_pa();
 
 class PAController
@@ -51,8 +53,8 @@ public:
     PAController();
     ~PAController();
     void run();
-    void on();
-    void off();
+    void on(string reason);
+    void off(string reason);
     bool state();
     
 private:
