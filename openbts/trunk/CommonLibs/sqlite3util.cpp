@@ -1,6 +1,6 @@
 /*
-* Written by David A. Burgess, Kestrel Signal Processing, Inc., 2010
-* The author disclaims copyright to this source code.
+* Copyright 2010 Kestrel Signal Processing, Inc.
+* All rights reserved.
 */
 
 
@@ -17,12 +17,18 @@
 
 int sqlite3_prepare_statement(sqlite3* DB, sqlite3_stmt **stmt, const char* query)
 {
-	int prc = sqlite3_prepare_v2(DB,query,strlen(query),stmt,NULL);
-	if (prc) {
-		fprintf(stderr,"sqlite3_prepare_v2 failed for \"%s\": %s\n",query,sqlite3_errmsg(DB));
-		sqlite3_finalize(*stmt);
-	}
-	return prc;
+        int src = SQLITE_BUSY;
+        while (src==SQLITE_BUSY) {
+                src = sqlite3_prepare_v2(DB,query,strlen(query),stmt,NULL);
+                if (src==SQLITE_BUSY) {
+                        usleep(100000);
+                }
+        }
+        if (src) {
+                fprintf(stderr,"sqlite3_prepare_v2 failed for \"%s\": %s\n",query,sqlite3_errmsg(DB));
+                sqlite3_finalize(*stmt);
+        }
+        return src;
 }
 
 int sqlite3_run_query(sqlite3* DB, sqlite3_stmt *stmt)
