@@ -564,7 +564,7 @@ SMq::handle_response(short_msg_p_list::iterator qmsgit)
 		resplist.splice(resplist.begin(),
 				time_sorted_list, sent_msg);
 		if(!my_backup.remove(resplist.begin()->timestamp)){
-		    LOG(INFO) << "Unable to remove message: " << resplist.begin()->timestamp;
+			LOG(INFO) << "Unable to remove message: " << resplist.begin()->timestamp;
 		}		
 		resplist.pop_front();	// pop and delete the sent_msg.
 
@@ -575,17 +575,18 @@ SMq::handle_response(short_msg_p_list::iterator qmsgit)
 	case 4: // 4xx -- failure by client
 		// 480 Temporarily Unavailable - means we have to retry later.
 		// Most likely this means that a subscriber left network coverage
-		// without unregistering from the network.
-		// TODO:: Store message until subscriber becomes available.
-		//        For now we just bounce it to originator. :(
-
+		// without unregistering from the network. Try again later.
+		// Eventually we should have a hook for their return
+		if (qmsg->parsed->status_code == 480){
+			increase_acked_msg_timeout(&(*sent_msg));
+		}
 		// Other 4xx codes mean the original message was bad.  Bounce it.
-		{
+		else {
 			ostringstream errmsg;
 			errmsg << qmsg->parsed->status_code << " "
 			       << qmsg->parsed->reason_phrase;
 			sent_msg->set_state(
-			     bounce_message((&*sent_msg), errmsg.str().c_str()));
+			    bounce_message((&*sent_msg), errmsg.str().c_str()));
 		}
 		break;
 		
@@ -611,7 +612,7 @@ SMq::handle_response(short_msg_p_list::iterator qmsgit)
 	// when resplist goes out of scope.
 
 	if(!my_backup.remove(resplist.begin()->timestamp)){
-	    LOG(INFO) << "Unable to remove message: " << resplist.begin()->timestamp;
+		LOG(INFO) << "Unable to remove message: " << resplist.begin()->timestamp;
 	}		
 }
 
