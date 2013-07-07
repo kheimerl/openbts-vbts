@@ -18,7 +18,7 @@ set -e
 
 remove()
 {
-    killall smqueue
+    killall sipauthserve
 }
 
 case "$1" in
