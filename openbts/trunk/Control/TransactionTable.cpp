@@ -48,7 +48,8 @@ using namespace GSM;
 using namespace Control;
 using namespace SIP;
 
-
+//50 seconds for a transaction to be cleared
+#define ERASE_TIME 50000
 
 static const char* createTransactionTable = {
 	"CREATE TABLE IF NOT EXISTS TRANSACTION_TABLE ("
@@ -325,11 +326,18 @@ bool TransactionEntry::dead() const
 	unsigned age = mStateTimer.elapsed();
 	mLock.unlock();
 
+	LOG(DEBUG) << "Checking Dead:" << mSIP.callID() << ":" <<lSIPState << ":" << lGSMState << ":" << age;
+
+	if (!SIPValid()) {
+	    LOG (ERR) << "Invalid State";
+	    return true;
+	}
+
 	// Now check states against the timer.
 
 
-	// 30-second tests
-	if (age < 30*1000) return false;
+	// 180-second tests
+	if (age < 180*1000) return false;
 	// Failed?
 	if (lSIPState==SIP::Fail) return true;
 	// SIP Null state?
@@ -978,7 +986,7 @@ void TransactionTable::clearDeadEntries()
 	// Caller should hold mLock.
 	TransactionMap::iterator itr = mTable.begin();
 	while (itr!=mTable.end()) {
-		if (!itr->second->dead()) ++itr;
+	    if (!itr->second->dead() || itr->second->stateAge() < ERASE_TIME) ++itr;
 		else {
 			LOG(DEBUG) << "erasing " << itr->first;
 			TransactionMap::iterator old = itr;

@@ -43,8 +43,8 @@
 using namespace std;
 
 #define SERVER_LOC "http://localhost:8080/RPC2"
-#define ON_METHOD "onWithReason"
-#define OFF_METHOD "offWithReason"
+#define ON_METHOD "on"
+#define OFF_METHOD "off"
 
 #define WAIT_TIME 30
 
@@ -106,9 +106,9 @@ void PARPCClient::pa_on(){
     LOG(INFO) << "PA On from client";
     if (time(NULL) > last_update + WAIT_TIME){
 	xmlrpc_c::value result;
-	xmlrpc_c::paramList params;
-	params.add(reason);
-	client.call(SERVER_LOC, ON_METHOD, params, &result);
+	//xmlrpc_c::paramList params;
+	//params.add(reason);
+	client.call(SERVER_LOC, ON_METHOD, "", &result);
 	last_update = time(NULL);
     }
 }
@@ -116,7 +116,7 @@ void PARPCClient::pa_on(){
 void PARPCClient::pa_off(){
     LOG(INFO) << "PA Off from client";
     xmlrpc_c::value result;
-    xmlrpc_c::paramList params;
-    params.add(reason);
-    client.call(SERVER_LOC, OFF_METHOD, params, &result);
+    //xmlrpc_c::paramList params;
+    //params.add(reason);
+    client.call(SERVER_LOC, OFF_METHOD, "", &result);
 }

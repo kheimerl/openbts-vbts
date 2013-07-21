@@ -278,6 +278,9 @@ class TransactionEntry {
 	/** Return true if clearing is in progress in the GSM side. */
 	bool clearingGSM() const;
 
+	/** Returns true if we have a valid SIP state */
+	bool SIPValid( ) const { ScopedLock lock(mLock); return mSIP.SIPValid(); }
+
 	/** Retrns true if the transaction is "dead". */
 	bool dead() const;
 

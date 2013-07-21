@@ -74,7 +74,7 @@ static string off_cmd;
 
 /* assumes you hold the lock */
 static void actual_pa_off(string reason){
-    LOG(ALERT) << "PA Off: " << reason;
+    LOG(ALERT) << "PA Off:" << pa_on << ":" << reason;
     pa_on = false;
 #ifndef DONT_USE_SERIAL
     fcntl(fd1,F_SETFL,0);
@@ -87,7 +87,7 @@ static void turn_pa_on(bool resetTime, string reason){
     ScopedLock lock (pa_lock);
     //don't think I need to garbage collect, it's just an int
     if (!pa_on || resetTime){
-	LOG(ALERT) << "PA On: " << reason;
+	LOG(ALERT) << "PA On:" << pa_on << ":" << reason;
 	last_update = time(NULL);
 	pa_on = true;
 #ifndef DONT_USE_SERIAL

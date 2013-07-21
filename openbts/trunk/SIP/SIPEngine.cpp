@@ -168,8 +168,6 @@ SIPEngine::~SIPEngine()
 	// FIXME -- Do we need to dispose of the RtpSesion *mSesison?
 }
 
-
-
 void SIPEngine::saveINVITE(const osip_message_t *INVITE, bool mine)
 {
 	// Instead of cloning, why not just keep the old one?
@@ -239,6 +237,32 @@ void SIPEngine::saveERROR(const osip_message_t *ERROR, bool /*mine*/)
 	// This simplifies the call-handling logic.
 	if (mERROR!=NULL) osip_message_free(mERROR);
 	osip_message_clone(ERROR,&mERROR);
+}
+
+bool SIPEngine::SIPValid() const
+{
+
+    switch(mState) {
+    case NullState:
+    case Timeout:
+    case Starting:
+    case Proceeding:
+    case Ringing:
+    case Busy:
+    case Connecting:
+    case Active:
+    case MODClearing:
+    case MODCanceling:
+    case MTDClearing:
+    case MTDCanceling:
+    case Canceled:
+    case Cleared:
+    case Fail:
+    case MessageSubmit:
+	return true;
+    default:
+	return false;
+    }
 }
 
 #if 0
@@ -554,7 +578,7 @@ SIPState  SIPEngine::MOCCheckForOK(Mutex *lock)
 		LOG(DEBUG) << "timeout";
 		//if we got a 100 TRYING (SIP::Proceeding)
 		//don't time out
-		if (mState != SIP::Proceeding){
+		if (mState != SIP::Proceeding && mState != SIP::Ringing){
 			mState = Timeout;
 		}
 		return mState;

@@ -156,9 +156,12 @@ public:
 
 	/** Return the RTP Port being used. */
 	short RTPPort() const { return mRTPPort; }
+	
+	/** return true if in valid sip state */
+	bool SIPValid() const;
 
 	/** Return if the call has successfully finished */
-	bool finished() const { return (mState==Cleared || mState==Canceled || mState==Fail); }
+	bool finished() const { return (!SIPValid() || mState==Cleared || mState==Canceled || mState==Fail); }
 
 	/** Return if the communication was started by us (true) or not (false) */
 	/* requires an mINVITE be established */

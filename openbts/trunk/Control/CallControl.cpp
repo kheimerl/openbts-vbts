@@ -985,13 +985,14 @@ void Control::MOCController(TransactionEntry *transaction, GSM::TCHFACCHLogicalC
 		switch (state) {
 			case SIP::Busy:
 				LOG(INFO) << "SIP:Busy, abort";
-				transaction->MOCSendACK();
 				forceGSMClearing(transaction,TCH,GSM::L3Cause(0x11));
 				gTransactionTable.remove(transaction);
 				return;
 			case SIP::Fail:
 				LOG(NOTICE) << "SIP:Fail, abort";
-				return abortAndRemoveCall(transaction,TCH,GSM::L3Cause(0x7F));
+				forceGSMClearing(transaction,TCH,GSM::L3Cause(0x7F));
+				gTransactionTable.remove(transaction);
+				return;
 			case SIP::Ringing:
 				LOG(INFO) << "SIP:Ringing, send Alerting and move on";
 				TCH->send(GSM::L3Alerting(L3TI));
